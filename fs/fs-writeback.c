@@ -1689,6 +1689,30 @@ static long writeback_inodes_wb(struct bdi_writeback *wb, long nr_pages,
 	return nr_pages - work.nr_pages;
 }
 
+
+static bool over_bground_thresh(struct backing_dev_info *bdi)
+{
+	unsigned long background_thresh, dirty_thresh;
+
+	global_dirty_limits(&background_thresh, &dirty_thresh);
+
+	if (bdi_stat(bdi, BDI_RECLAIMABLE) >
+				bdi_dirty_limit(bdi, background_thresh))
+		return true;
+
+	return false;
+}
+
+/*
+ * Called under wb->list_lock. If there are multiple wb per bdi,
+ * only the flusher working on the first wb should do it.
+ */
+static void wb_update_bandwidth(struct bdi_writeback *wb,
+				unsigned long start_time)
+{
+	__bdi_update_bandwidth(wb->bdi, 0, 0, 0, 0, 0, start_time);
+}
+
 /*
  * Explicit flushing or periodic writeback of "old" data.
  *
