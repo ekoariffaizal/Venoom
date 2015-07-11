@@ -249,6 +249,7 @@ int mdss_livedisplay_update(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 				CMD_REQ_COMMIT | CMD_CLK_CTRL);
 		kfree(dsi_cmds.buf);
 		kfree(dsi_cmds.cmds);
+
 	} else {
 		pr_err("%s: error parsing DSI command! ret=%d", __func__, ret);
 	}
