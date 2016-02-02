@@ -29,6 +29,7 @@
  *	x1 - src
  */
 ENTRY(copy_page)
+
 alternative_if_not ARM64_HAS_NO_HW_PREFETCH
 	nop
 	nop
@@ -51,6 +52,7 @@ alternative_endif
 	add	x1, x1, #128
 1:
 	subs	x18, x18, #128
+
 
 alternative_if_not ARM64_HAS_NO_HW_PREFETCH
 	nop
