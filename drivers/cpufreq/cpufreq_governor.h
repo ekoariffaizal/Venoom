@@ -267,13 +267,9 @@ static ssize_t show_sampling_rate_min_gov_pol				\
 	return sprintf(buf, "%u\n", dbs_data->min_sampling_rate);	\
 }
 
-extern struct mutex cpufreq_governor_lock;
-
-void dbs_check_cpu(struct dbs_data *dbs_data, int cpu);
-int cpufreq_governor_dbs(struct cpufreq_policy *policy,
-		struct common_dbs_data *cdata, unsigned int event);
-void gov_queue_work(struct dbs_data *dbs_data, struct cpufreq_policy *policy,
-		unsigned int delay, bool all_cpus);
+extern struct mutex dbs_data_mutex;
+void dbs_check_cpu(struct cpufreq_policy *policy);
+int cpufreq_governor_dbs(struct cpufreq_policy *policy, unsigned int event);
 void od_register_powersave_bias_handler(unsigned int (*f)
 		(struct cpufreq_policy *, unsigned int, unsigned int),
 		unsigned int powersave_bias);
