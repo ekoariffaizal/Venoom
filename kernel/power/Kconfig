@@ -346,8 +346,14 @@ config ENERGY_MODEL
 	  can leverage information about the energy consumed by CPUs to make
 	  smarter decisions. This config option enables the framework from
 	  which subsystems can access the energy models.
-
 	  The exact usage of the energy model is subsystem-dependent.
 
 	  If in doubt, say N.
+
+	  
+config PM_SYNC_BEFORE_SUSPEND
+	bool "Sync file systems before suspend"
+	depends on SUSPEND
+	default y
+
 
