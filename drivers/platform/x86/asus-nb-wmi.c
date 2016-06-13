@@ -409,7 +409,6 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_no_rfkill,
 	},
-
 	{
 		.callback = dmi_matched,
 		.ident = "ASUSTeK COMPUTER INC. U303LB",
@@ -419,7 +418,6 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_no_rfkill,
 	},
-
 	{
 		.callback = dmi_matched,
 		.ident = "ASUSTeK COMPUTER INC. Z550MA",
