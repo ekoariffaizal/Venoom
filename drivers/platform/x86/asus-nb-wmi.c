@@ -135,6 +135,10 @@ static struct quirk_entry quirk_asus_forceals = {
 };
 
 
+static struct quirk_entry quirk_no_rfkill = {
+	.no_rfkill = true,
+};
+
 static int dmi_matched(const struct dmi_system_id *dmi)
 {
 	quirks = dmi->driver_data;
@@ -381,7 +385,6 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_asus_x200ca,
 	},
-
 	{
 		.callback = dmi_matched,
 		.ident = "ASUSTeK COMPUTER INC. X555UB",
@@ -391,6 +394,7 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_no_rfkill,
 	},
+
 	{
 		.callback = dmi_matched,
 		.ident = "ASUSTeK COMPUTER INC. N552VW",
@@ -459,7 +463,6 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_asus_forceals,
 	},
-
 	{},
 };
 
