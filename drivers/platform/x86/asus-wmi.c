@@ -2113,9 +2113,6 @@ static int asus_wmi_add(struct platform_device *pdev)
 			goto fail_rfkill;
 	}
 
-	if (asus->driver->quirks->wmi_force_als_set)
-		asus_wmi_set_als();
-
 	/* Some Asus desktop boards export an acpi-video backlight interface,
 	   stop this from showing up */
 	chassis_type = dmi_get_system_info(DMI_CHASSIS_TYPE);
