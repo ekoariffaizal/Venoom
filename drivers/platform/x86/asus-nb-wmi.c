@@ -163,6 +163,11 @@ static struct quirk_entry quirk_no_rfkill = {
 	.no_rfkill = true,
 };
 
+static struct quirk_entry quirk_no_rfkill_wapf4 = {
+	.wapf = 4,
+	.no_rfkill = true,
+};
+
 static int dmi_matched(const struct dmi_system_id *dmi)
 {
 	quirks = dmi->driver_data;
