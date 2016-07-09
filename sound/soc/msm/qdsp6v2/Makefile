@@ -31,3 +31,5 @@ obj-$(CONFIG_AUDIO_OCMEM) += ocmem-audio.o
 subdir-ccflags-y += \
 	-Wno-non-literal-null-conversion \
 	-Wno-duplicate-decl-specifier
+
+ccflags-y := -Os
