@@ -56,7 +56,6 @@ struct quirk_entry {
 	 */
 	int no_display_toggle;
 	u32 xusb2pr;
-
 	bool (*i8042_filter)(unsigned char data, unsigned char str,
 			     struct serio *serio);
 };

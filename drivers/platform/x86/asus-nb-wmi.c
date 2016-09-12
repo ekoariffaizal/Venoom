@@ -86,6 +86,10 @@ static struct quirk_entry quirk_asus_q500a = {
 	.wmi_backlight_set_devstate = true,
 };
 
+static struct quirk_entry quirk_asus_q500a = {
+	.i8042_filter = asus_q500a_i8042_filter,
+};
+
 /*
  * For those machines that need software to control bt/wifi status
  * and can't adjust brightness through ACPI interface
