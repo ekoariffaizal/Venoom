@@ -1110,15 +1110,6 @@ static void asus_wmi_set_xusb2pr(struct asus_wmi *asus)
 }
 
 /*
- * Some devices dont support or have borcken get_als method
- * but still support set method.
- */
-static void asus_wmi_set_als(void)
-{
-	asus_wmi_set_devstate(ASUS_WMI_DEVID_ALS_ENABLE, 1, NULL);
-}
-
-/*
  * Hwmon device
  */
 static int asus_hwmon_agfn_fan_speed_read(struct asus_wmi *asus, int fan,
@@ -2124,6 +2115,8 @@ static int asus_wmi_add(struct platform_device *pdev)
 
 	if (asus->driver->quirks->wmi_backlight_native)
 		acpi_video_set_dmi_backlight_type(acpi_backlight_native);
+	if (asus->driver->quirks->xusb2pr)
+		asus_wmi_set_xusb2pr(asus);
 	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
 		err = asus_wmi_backlight_init(asus);
 		if (err && err != -ENODEV)
