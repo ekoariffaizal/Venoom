@@ -152,6 +152,10 @@ static struct quirk_entry quirk_asus_ux303ub = {
 	.wmi_backlight_native = true,
 };
 
+static struct quirk_entry quirk_asus_x550lb = {
+	.xusb2pr = 0x01D9,
+};
+
 static int dmi_matched(const struct dmi_system_id *dmi)
 {
 	quirks = dmi->driver_data;
@@ -463,7 +467,6 @@ static const struct dmi_system_id asus_quirks[] = {
 		},
 		.driver_data = &quirk_asus_x550lb,
 	},
-
 	{
 		.callback = dmi_matched,
 		.ident = "ASUSTeK COMPUTER INC. UX430UQ",
