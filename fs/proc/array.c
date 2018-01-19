@@ -430,6 +430,13 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
 		 * non-racy way to read them without freezing the task.
 		 * Programs that need reliable values can use ptrace(2).
 		 */
+		if (permitted && (task->flags & PF_DUMPCORE)) {
+			if (try_get_task_stack(task)) {
+				eip = KSTK_EIP(task);
+				esp = KSTK_ESP(task);
+				put_task_stack(task);
+			}
+		}
 	}
 
 	get_task_comm(tcomm, task);
