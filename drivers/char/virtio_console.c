@@ -2112,7 +2112,7 @@ static int virtcons_probe(struct virtio_device *vdev)
 					   VIRTIO_CONSOLE_DEVICE_READY, 0);
 			/* Device was functional: we need full cleanup. */
 			virtcons_remove(vdev);
-			return err;
+			return -ENOMEM;
 		}
 	} else {
 		/*
