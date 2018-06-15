@@ -4985,6 +4985,33 @@ static inline void hrtick_update(struct rq *rq)
 static bool __cpu_overutilized(int cpu, int delta);
 static bool cpu_overutilized(int cpu);
 unsigned long boosted_cpu_util(int cpu);
+static bool sd_overutilized(struct sched_domain *sd)
+{
+	return sd->shared->overutilized;
+}
+
+static void set_sd_overutilized(struct sched_domain *sd)
+{
+	sd->shared->overutilized = true;
+}
+
+static void clear_sd_overutilized(struct sched_domain *sd)
+{
+	sd->shared->overutilized = false;
+}
+
+static inline void update_overutilized_status(struct rq *rq)
+{
+	struct sched_domain *sd;
+
+	rcu_read_lock();
+	sd = rcu_dereference(rq->sd);
+	if (sd && (sd->flags & SD_LOAD_BALANCE))
+		set_sd_overutilized(sd);
+	else if (sd && sd->parent)
+		set_sd_overutilized(sd->parent);
+	rcu_read_unlock();
+}
 #else
 #define boosted_cpu_util(cpu) cpu_util_freq(cpu)
 #endif
