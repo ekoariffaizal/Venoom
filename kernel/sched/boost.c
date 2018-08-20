@@ -34,7 +34,6 @@ static bool verify_boost_params(int old_val, int new_val)
 	 */
 	return !(!!old_val == !!new_val);
 }
-
 int sched_boost_handler(struct ctl_table *table, int write,
 		void __user *buffer, size_t *lenp,
 		loff_t *ppos)

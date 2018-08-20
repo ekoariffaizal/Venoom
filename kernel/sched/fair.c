@@ -3014,6 +3014,7 @@ void set_task_rq_fair(struct sched_entity *se,
 	 * time. This will result in the wakee task is less decayed, but giving
 	 * the wakee more load sounds not bad.
 	 */
+
 	if (!(se->avg.last_update_time && prev))
 		return;
 
@@ -6344,7 +6345,7 @@ boosted_cpu_util(int cpu)
 	else
 		margin = min(0, schedtune_cpu_margin(util, cpu));
 
-	trace_sched_boost_cpu(cpu, util, margin);
+//	trace_sched_boost_cpu(cpu, util, margin);
 
 	return util + margin;
 }
