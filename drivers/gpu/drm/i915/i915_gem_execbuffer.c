@@ -1122,7 +1122,8 @@ i915_reset_gen7_sol_offsets(struct drm_device *dev,
 }
 
 static struct drm_i915_gem_object*
-i915_gem_execbuffer_parse(struct intel_engine_cs *ring,
+i915_gem_execbuffer_parse(struct intel_context *ctx,
+			  struct intel_engine_cs *ring,
 			  struct drm_i915_gem_exec_object2 *shadow_exec_entry,
 			  struct eb_vmas *eb,
 			  struct drm_i915_gem_object *batch_obj,
@@ -1132,6 +1133,10 @@ i915_gem_execbuffer_parse(struct intel_engine_cs *ring,
 {
 	struct drm_i915_gem_object *shadow_batch_obj;
 	struct i915_vma *vma;
+	struct i915_vma *user_vma = list_entry(eb->vmas.prev,
+					typeof(*user_vma), exec_list);
+	u64 batch_start;
+	u64 shadow_batch_start;
 	int ret;
 
 	shadow_batch_obj = i915_gem_batch_pool_get(&ring->batch_pool,
@@ -1150,7 +1155,28 @@ i915_gem_execbuffer_parse(struct intel_engine_cs *ring,
 
 	ret = i915_gem_obj_ggtt_pin(shadow_batch_obj, 0, 0);
 	if (ret)
+	vma = shadow_batch_pin(shadow_batch_obj, vm);
+	if (IS_ERR(vma)) {
+		ret = PTR_ERR(vma);
 		goto err;
+
+	batch_start = user_vma->node.start + batch_start_offset;
+
+	shadow_batch_start = vma->node.start;
+
+	ret = i915_parse_cmds(ctx,
+			      ring,
+			      batch_obj,
+			      batch_start,
+			      batch_start_offset,
+			      batch_len,
+			      shadow_batch_obj,
+			      shadow_batch_start);
+	if (ret) {
+		WARN_ON(vma->pin_count == 0);
+		vma->pin_count--;
+		goto err;
+	}
 
 	i915_gem_object_unpin_pages(shadow_batch_obj);
 
@@ -1506,7 +1532,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 		if (batch_len == 0)
 			batch_len = batch_obj->base.size - batch_off;
 
-		parsed_batch_obj = i915_gem_execbuffer_parse(ring,
+		parsed_batch_obj = i915_gem_execbuffer_parse(ctx, ring,
 						      &shadow_exec_entry,
 						      eb,
 						      batch_obj,
