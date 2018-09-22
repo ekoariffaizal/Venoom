@@ -1093,7 +1093,7 @@ static int msm_lmh_dcvs_update(int cpu)
 	 * Notify LMH dcvs driver about the new software limit. This will
 	 * trigger LMH DCVS driver polling for the mitigated frequency.
 	 */
-	msm_lmh_dcvsh_sw_notify(cpu);
+
 
 	return ret;
 }
