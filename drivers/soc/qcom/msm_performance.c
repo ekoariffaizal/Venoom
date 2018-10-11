@@ -40,7 +40,6 @@ struct events {
 };
 static struct events events_group;
 static struct task_struct *events_notify_thread;
-
 static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 {
 	int i, j, ntokens = 0;
