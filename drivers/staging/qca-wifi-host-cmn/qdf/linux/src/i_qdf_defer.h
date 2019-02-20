@@ -144,7 +144,7 @@ static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
 static inline QDF_STATUS
 __qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
 {
-	schedule_delayed_work(&work->dwork, msecs_to_jiffies(delay));
+	queue_delayed_work(system_power_efficient_wq, work, msecs_to_jiffies(delay));
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -186,6 +186,78 @@ static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
  */
 static inline uint32_t __qdf_flush_delayed_work(__qdf_delayed_work_t *work)
 {
+<<<<<<< HEAD
+=======
+	flush_delayed_work(work);
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+static inline QDF_STATUS
+__qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
+{
+	work->fn = func;
+	work->arg = arg;
+	INIT_WORK(&work->work, __qdf_defer_func);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
+					       qdf_defer_fn_t func,
+					       void *arg)
+{
+	/*Initilize func and argument in work struct */
+	work->fn = func;
+	work->arg = arg;
+	INIT_DELAYED_WORK(&work->dwork, __qdf_defer_delayed_func);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+__qdf_queue_work(__qdf_workqueue_t *wqueue, __qdf_work_t *work)
+{
+	queue_work(wqueue, &work->work);
+}
+
+static inline void __qdf_queue_delayed_work(__qdf_workqueue_t *wqueue,
+					    __qdf_delayed_work_t *work,
+					    uint32_t delay)
+{
+	queue_delayed_work(wqueue, &work->dwork, msecs_to_jiffies(delay));
+}
+
+static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
+{
+	schedule_work(&work->work);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+__qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
+{
+	queue_delayed_work(system_power_efficient_wq, &work->dwork, msecs_to_jiffies(delay));
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool __qdf_cancel_work(__qdf_work_t *work)
+{
+	return cancel_work_sync(&work->work);
+}
+
+static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
+{
+	return cancel_delayed_work_sync(&work->dwork);
+}
+
+static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
+{
+	flush_work(&work->work);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint32_t __qdf_flush_delayed_work(__qdf_delayed_work_t *work)
+{
+>>>>>>> 17592bf23766... wifi-host-cmn: queue work on power efficient workingqueues
 	flush_delayed_work(&work->dwork);
 	return QDF_STATUS_SUCCESS;
 }
