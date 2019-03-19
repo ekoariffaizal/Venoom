@@ -327,6 +327,14 @@ static int __init cpu_input_boost_init(void)
 	if (!b)
 		return -ENOMEM;
 
+	b->wq = alloc_workqueue("cpu_input_boost_wq", WQ_UNBOUND, 0);
+	if (!b->wq) {
+		ret = -ENOMEM;
+		goto free_b;
+	}
+
+	atomic64_set(&b->max_boost_expires, 0);
+	INIT_WORK(&b->input_boost, input_boost_worker);
 	INIT_DELAYED_WORK(&b->input_unboost, input_unboost_worker);
 	INIT_DELAYED_WORK(&b->max_unboost, max_unboost_worker);
 	init_waitqueue_head(&b->boost_waitq);
