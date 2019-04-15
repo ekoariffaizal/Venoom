@@ -640,6 +640,10 @@ struct mdss_dsi_ctrl_pdata {
 	atomic_t needs_wake;
 
 	struct pm_qos_request pm_qos_req;
+	int disp_err_detect_gpio;
+	struct delayed_work err_int_work;
+	bool rdy_err_detect;
+	bool err_detect_irq_en;
 };
 
 struct dsi_status_data {

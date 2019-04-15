@@ -343,6 +343,25 @@ static void mdss_dsi_panel_bklt_dcs(struct mdss_dsi_ctrl_pdata *ctrl, int level)
 	mdss_dsi_cmdlist_put(ctrl, &cmdreq);
 }
 
+void mdss_dsi_err_detect_irq_control(struct mdss_dsi_ctrl_pdata *ctrl_pdata, bool enable)
+{
+	int irq;
+
+	if (!gpio_is_valid(ctrl_pdata->disp_err_detect_gpio))
+		  return;
+
+	if (cmpxchg(&ctrl_pdata->err_detect_irq_en, !enable, enable) == enable)
+		return;
+
+	irq = gpio_to_irq(ctrl_pdata->disp_err_detect_gpio);
+
+	if (enable)
+		enable_irq(irq);
+	else
+		disable_irq(irq);
+	pr_debug(" %s : enable(%d)\n", __func__, enable);
+}
+
 static int mdss_dsi_request_gpios(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	int rc = 0;
