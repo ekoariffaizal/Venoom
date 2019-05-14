@@ -650,6 +650,7 @@ static void cpuidle_clear_idle_cpu(unsigned int cpu)
 	atomic_andnot(BIT(cpu), &idle_cpu_mask);
 }
 
+
 /*
  * This function gets called when a part of the kernel has a new latency
  * requirement.  This means we need to get only those processors out of their
@@ -660,6 +661,8 @@ static int cpuidle_latency_notify(struct notifier_block *b,
 		unsigned long l, void *v)
 {
 	static unsigned long prev_latency = ULONG_MAX;
+	unsigned long cpus;
+	struct cpumask *idle_mask = to_cpumask(&cpus);
 
 	if (l < prev_latency) {
 		unsigned long idle_cpus = atomic_read(&idle_cpu_mask);
@@ -675,7 +678,9 @@ static int cpuidle_latency_notify(struct notifier_block *b,
 
 		cpumask_andnot(idle_mask, idle_mask, cpu_isolated_mask);
 		preempt_disable();
-		smp_call_function_many(idle_mask, smp_callback, NULL, false);
+		cpus = atomic_read(&idle_cpus);
+		cpumask_andnot(idle_mask, idle_mask, cpu_isolated_mask);
+		arch_send_call_function_ipi_mask(idle_mask);
 		preempt_enable();
 	}
 
