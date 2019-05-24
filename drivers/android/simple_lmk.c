@@ -100,6 +100,7 @@ static unsigned long find_victims(struct victim_info *varr, int *vindex,
 
 	for_each_process(tsk) {
 		struct task_struct *vtsk;
+		unsigned long tasksize;
 
 		/*
 		 * Search for tasks with the targeted importance (adj). Since
@@ -124,7 +125,7 @@ static unsigned long find_victims(struct victim_info *varr, int *vindex,
 		varr[*vindex].size = get_mm_rss(vtsk->mm);
 
 		/* Keep track of the number of pages that have been found */
-		pages_found += varr[*vindex].size;
+		pages_found += tasksize;
 
 		/* Make sure there's space left in the victim array */
 		if (++*vindex == vmaxlen)
@@ -315,8 +316,7 @@ static int simple_lmk_init_set(const char *val, const struct kernel_param *kp)
 	if (cmpxchg(&init_done, false, true))
 		return 0;
 
-	thread = kthread_run_perf_critical(simple_lmk_reclaim_thread, NULL,
-					   "simple_lmkd");
+	thread = kthread_run(simple_lmk_reclaim_thread, NULL, "simple_lmkd");
 	BUG_ON(IS_ERR(thread));
 
 	return 0;
