@@ -30,7 +30,7 @@ static bool link_stack_flush_enabled;
 bool barrier_nospec_enabled;
 static bool no_nospec;
 static bool btb_flush_enabled;
-#ifdef CONFIG_PPC_FSL_BOOK3E
+#if defined(CONFIG_PPC_FSL_BOOK3E) || defined(CONFIG_PPC_BOOK3S_64)
 static bool no_spectrev2;
 #endif
 
@@ -108,7 +108,7 @@ static __init int barrier_nospec_debugfs_init(void)
 device_initcall(barrier_nospec_debugfs_init);
 #endif /* CONFIG_DEBUG_FS */
 
-#ifdef CONFIG_PPC_FSL_BOOK3E
+#if defined(CONFIG_PPC_FSL_BOOK3E) || defined(CONFIG_PPC_BOOK3S_64)
 static int __init handle_nospectre_v2(char *p)
 {
 	no_spectrev2 = true;
@@ -116,6 +116,9 @@ static int __init handle_nospectre_v2(char *p)
 	return 0;
 }
 early_param("nospectre_v2", handle_nospectre_v2);
+#endif /* CONFIG_PPC_FSL_BOOK3E || CONFIG_PPC_BOOK3S_64 */
+
+#ifdef CONFIG_PPC_FSL_BOOK3E
 void setup_spectre_v2(void)
 {
 	if (no_spectrev2)
@@ -430,28 +433,17 @@ static void toggle_count_cache_flush(bool enable)
 
 void setup_count_cache_flush(void)
 {
-
 	bool enable = true;
 
 	if (no_spectrev2 || cpu_mitigations_off()) {
 		if (security_ftr_enabled(SEC_FTR_BCCTRL_SERIALISED) ||
 		    security_ftr_enabled(SEC_FTR_COUNT_CACHE_DISABLED))
-			pr_warn("Spectre v2 mitigations not fully under software control, can't disable\n");
+			pr_warn("Spectre v2 mitigations not under software control, can't disable\n");
 
 		enable = false;
 	}
 
-	/*
-	 * There's no firmware feature flag/hypervisor bit to tell us we need to
-	 * flush the link stack on context switch. So we set it here if we see
-	 * either of the Spectre v2 mitigations that aim to protect userspace.
-	 */
-	if (security_ftr_enabled(SEC_FTR_COUNT_CACHE_DISABLED) ||
-	    security_ftr_enabled(SEC_FTR_FLUSH_COUNT_CACHE))
-		security_ftr_set(SEC_FTR_FLUSH_LINK_STACK);
-
 	toggle_count_cache_flush(enable);
-
 }
 
 #ifdef CONFIG_DEBUG_FS
