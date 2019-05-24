@@ -438,8 +438,7 @@ void setup_count_cache_flush(void)
 	if (no_spectrev2 || cpu_mitigations_off()) {
 		if (security_ftr_enabled(SEC_FTR_BCCTRL_SERIALISED) ||
 		    security_ftr_enabled(SEC_FTR_COUNT_CACHE_DISABLED))
-			pr_warn("Spectre v2 mitigations not fully under software control, can't disable\n");
-
+			pr_warn("Spectre v2 mitigations not under software control, can't disable\n");
 		enable = false;
 	}
 
