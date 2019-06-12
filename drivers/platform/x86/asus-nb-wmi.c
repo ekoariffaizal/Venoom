@@ -86,10 +86,6 @@ static struct quirk_entry quirk_asus_q500a = {
 	.wmi_backlight_set_devstate = true,
 };
 
-static struct quirk_entry quirk_asus_q500a = {
-	.i8042_filter = asus_q500a_i8042_filter,
-};
-
 /*
  * For those machines that need software to control bt/wifi status
  * and can't adjust brightness through ACPI interface
@@ -150,13 +146,16 @@ static struct quirk_entry quirk_no_rfkill_wapf4 = {
 
 static struct quirk_entry quirk_asus_ux303ub = {
 	.wmi_backlight_native = true,
+	.wmi_backlight_set_devstate = true,
 };
 
 static struct quirk_entry quirk_asus_x550lb = {
+	.wmi_backlight_set_devstate = true,
 	.xusb2pr = 0x01D9,
 };
 
 static struct quirk_entry quirk_asus_forceals = {
+	.wmi_backlight_set_devstate = true,
 	.wmi_force_als_set = true,
 };
 
