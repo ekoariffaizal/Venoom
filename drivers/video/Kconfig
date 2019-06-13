@@ -50,8 +50,12 @@ endif
 if FB || SGI_NEWPORT_CONSOLE
 	source "drivers/video/logo/Kconfig"
 
-endif
+endif								 
 
-source "drivers/video/klapse/Kconfig"									 
-
+config KLAPSE
+    bool
+    default n
+    help
+        A simple rgb dynamic lapsing module similar to LineageOS' livedisplay
+		
 endmenu
