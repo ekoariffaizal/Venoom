@@ -59,6 +59,12 @@
 #include "mdss_smmu.h"
 #include "mdss_mdp.h"
 #include "dsi_access.h"
+#endif
+
+#ifdef CONFIG_KLAPSE
+#include <linux/klapse.h>
+#endif
+
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MDSS_FB_NUM 3
