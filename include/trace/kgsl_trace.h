@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,7 +23,7 @@
 
 #include <linux/tracepoint.h>
 #include "kgsl_device.h"
-#include "adreno_drawctxt.h"
+#include "../drivers/gpu/msm/adreno_drawctxt.h"
 
 struct kgsl_device;
 struct kgsl_ringbuffer_issueibcmds;
@@ -66,8 +66,7 @@ TRACE_EVENT(kgsl_issueibcmds,
 	),
 
 	TP_printk(
-		"d_name=%s ctx=%u ib=0x0 numibs=%u ts=%u "
-		"flags=%s result=%d type=%s",
+		"d_name=%s ctx=%u ib=0x0 numibs=%u ts=%u flags=%s result=%d type=%s",
 		__get_str(device_name),
 		__entry->drawctxt_id,
 		__entry->numibs,
@@ -652,8 +651,7 @@ DECLARE_EVENT_CLASS(kgsl_mem_timestamp_template,
 	),
 
 	TP_printk(
-		"d_name=%s gpuaddr=0x%llx size=%llu type=%s usage=%s id=%u ctx=%u"
-		" curr_ts=%u free_ts=%u",
+		"d_name=%s gpuaddr=0x%llx size=%llu type=%s usage=%s id=%u ctx=%u curr_ts=%u free_ts=%u",
 		__get_str(device_name),
 		__entry->gpuaddr,
 		__entry->size,
@@ -822,14 +820,14 @@ TRACE_EVENT(kgsl_constraint,
 
 TRACE_EVENT(kgsl_mmu_pagefault,
 
-	TP_PROTO(struct kgsl_device *device, unsigned int page,
+	TP_PROTO(struct kgsl_device *device, unsigned long page,
 		 unsigned int pt, const char *op),
 
 	TP_ARGS(device, page, pt, op),
 
 	TP_STRUCT__entry(
 		__string(device_name, device->name)
-		__field(unsigned int, page)
+		__field(unsigned long, page)
 		__field(unsigned int, pt)
 		__string(op, op)
 	),
@@ -842,7 +840,7 @@ TRACE_EVENT(kgsl_mmu_pagefault,
 	),
 
 	TP_printk(
-		"d_name=%s page=0x%08x pt=%u op=%s",
+		"d_name=%s page=0x%lx pt=%u op=%s",
 		__get_str(device_name), __entry->page, __entry->pt,
 		__get_str(op)
 	)
@@ -1155,6 +1153,55 @@ TRACE_EVENT(kgsl_clock_throttling,
 		__entry->idle_10pct, __entry->crc_50pct, __entry->crc_more50pct,
 		__entry->crc_less50pct, __entry->adj
 	)
+);
+
+DECLARE_EVENT_CLASS(gmu_oob_template,
+	TP_PROTO(unsigned int mask),
+	TP_ARGS(mask),
+	TP_STRUCT__entry(
+		__field(unsigned int, mask)
+	),
+	TP_fast_assign(
+		__entry->mask = mask;
+	),
+	TP_printk("mask=0x%08x", __entry->mask)
+);
+
+DEFINE_EVENT(gmu_oob_template, kgsl_gmu_oob_set,
+	TP_PROTO(unsigned int mask),
+	TP_ARGS(mask)
+);
+
+DEFINE_EVENT(gmu_oob_template, kgsl_gmu_oob_clear,
+	TP_PROTO(unsigned int mask),
+	TP_ARGS(mask)
+);
+
+DECLARE_EVENT_CLASS(hfi_msg_template,
+	TP_PROTO(unsigned int id, unsigned int size, unsigned int seqnum),
+	TP_ARGS(id, size, seqnum),
+	TP_STRUCT__entry(
+		__field(unsigned int, id)
+		__field(unsigned int, size)
+		__field(unsigned int, seq)
+	),
+	TP_fast_assign(
+		__entry->id = id;
+		__entry->size = size;
+		__entry->seq = seqnum;
+	),
+	TP_printk("id=0x%x size=0x%x seqnum=0x%x",
+		__entry->id, __entry->size, __entry->seq)
+);
+
+DEFINE_EVENT(hfi_msg_template, kgsl_hfi_send,
+	TP_PROTO(unsigned int id, unsigned int size, unsigned int seqnum),
+	TP_ARGS(id, size, seqnum)
+);
+
+DEFINE_EVENT(hfi_msg_template, kgsl_hfi_receive,
+	TP_PROTO(unsigned int id, unsigned int size, unsigned int seqnum),
+	TP_ARGS(id, size, seqnum)
 );
 
 #endif /* _KGSL_TRACE_H */
