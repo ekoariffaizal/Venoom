@@ -1762,94 +1762,6 @@ out_unlock:
 	return retval ?: nbytes;
 }
 
-
-static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
-					 char *buf, size_t nbytes, loff_t off)
-{
-#ifdef CONFIG_CPUSETS_ASSIST
-	int i;
-	struct cpuset *cs = css_cs(of_css(of));
-	struct c_data {
-		char *c_name;
-		char *c_cpus;
-	};
-	struct c_data c_targets[6] = {
-		/* Silver only cpusets go first */
-		{ "background",			"0-1"},
-		{ "camera-daemon",		"0-3"},
-		{ "system-background",		"0-3"},
-		{ "restricted",			"0-3"},
-		{ "top-app",			"0-7"},
-		{ "foreground",			"0-3,6-7"}};
-
-	if (!strcmp(current->comm, "init")) {
-		for (i = 0; i < ARRAY_SIZE(c_targets); i++) {
-			if (!strcmp(cs->css.cgroup->kn->name, c_targets[i].c_name)) {
-				strcpy(buf, c_targets[i].c_cpus);
-				pr_info("%s: setting to %s\n", c_targets[i].c_name, buf);
-				break;
-			}
-		}
-	}
-#endif
-
-	buf = strstrip(buf);
-
-static char *cpuset_online_adjust(char *adj_cpulist, char *orig_cpulist)
-{
-	unsigned int nr_lp_cpus, nr_perf_cpus;
-	cpumask_t orig_mask, tmp;
-	int cpu;
-
-	if (num_online_cpus() == num_present_cpus())
-		return orig_cpulist;
-
-	if (cpulist_parse(orig_cpulist, &orig_mask))
-		return orig_cpulist;
-
-	cpumask_and(&tmp, &orig_mask, cpu_lp_mask);
-	nr_lp_cpus = cpumask_weight(&tmp);
-
-	cpumask_and(&tmp, &orig_mask, cpu_perf_mask);
-	nr_perf_cpus = cpumask_weight(&tmp);
-
-	*adj_cpulist = '\0';
-
-	if (nr_lp_cpus) {
-		for_each_cpu_and(cpu, cpu_lp_mask, cpu_online_mask) {
-			sprintf(adj_cpulist, "%s,%d", adj_cpulist, cpu);
-			if (!--nr_lp_cpus)
-				break;
-		}
-	}
-
-	if (nr_perf_cpus) {
-		for_each_cpu_and(cpu, cpu_perf_mask, cpu_online_mask) {
-			sprintf(adj_cpulist, "%s,%d", adj_cpulist, cpu);
-			if (!--nr_perf_cpus)
-				break;
-		}
-	}
-
-	return adj_cpulist + 1;
-}
-
-static ssize_t cpuset_write_cpus_resmask(struct kernfs_open_file *of,
-					 char *buf, size_t nbytes, loff_t off)
-{
-	char adj_cpulist[NR_CPUS * 2 + 1];
-	BUILD_BUG_ON(NR_CPUS >= 10);
-
-	/*
-	 * Adjust the requested cpuset to only use online CPUs. This is useful
-	 * for the assumption that CPUs which aren't online right now will never
-	 * be online.
-	 */
-	buf = cpuset_online_adjust(adj_cpulist, strstrip(buf));
-
-	return cpuset_write_resmask(of, buf, nbytes, off);
-}
-
 /*
  * These ascii lists should be read in a single call, by using a user
  * buffer large enough to hold the entire map.  If read in smaller
@@ -1942,7 +1854,7 @@ static struct cftype files[] = {
 	{
 		.name = "cpus",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_cpus_resmask,
+		.write = cpuset_write_resmask,
 		.max_write_len = (100U + 6 * NR_CPUS),
 		.private = FILE_CPULIST,
 	},
