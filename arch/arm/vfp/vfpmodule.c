@@ -584,6 +584,10 @@ int vfp_preserve_user_clear_hwstate(struct user_vfp __user *ufp,
 
 	if (err)
 		return -EFAULT;
+	ufp_exc->fpexc = hwstate->fpexc;
+	ufp_exc->fpinst = hwstate->fpinst;
+	ufp_exc->fpinst2 = hwstate->fpinst2;
+
 
 	/* Ensure that VFP is disabled. */
 	vfp_flush_hwstate(thread);
