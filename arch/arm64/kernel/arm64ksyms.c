@@ -27,6 +27,7 @@
 #include <linux/uaccess.h>
 #include <linux/io.h>
 #include <linux/kprobes.h>
+
 #include <linux/arm-smccc.h>
 
 #include <asm/cacheflush.h>
@@ -72,10 +73,13 @@ EXPORT_SYMBOL(test_and_change_bit);
 EXPORT_SYMBOL(_mcount);
 NOKPROBE_SYMBOL(_mcount);
 #endif
+<<<<<<< HEAD
 	/* caching functions */
 EXPORT_SYMBOL(__dma_inv_range);
 EXPORT_SYMBOL(__dma_clean_range);
 EXPORT_SYMBOL(__dma_flush_range);
+=======
+>>>>>>> 596efa35fb66... ARM: 8480/2: arm64: add implementation for arm-smccc
 
 	/* arm-smccc */
 EXPORT_SYMBOL(arm_smccc_smc);
