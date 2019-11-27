@@ -164,6 +164,7 @@ static void _ab_buslevel_update(struct kgsl_pwrctrl *pwr,
  */
 static unsigned int _adjust_pwrlevel(struct kgsl_pwrctrl *pwr, int level,
 					struct kgsl_pwr_constraint *pwrc)
+			  
 {
 	unsigned int max_pwrlevel = max_t(unsigned int, pwr->thermal_pwrlevel,
 		pwr->max_pwrlevel);
@@ -185,6 +186,9 @@ static unsigned int _adjust_pwrlevel(struct kgsl_pwrctrl *pwr, int level,
 	}
 	break;
 	}
+
+												   
+									  
 
 	if (level < max_pwrlevel)
 		return max_pwrlevel;
@@ -343,6 +347,7 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 	 * constraints, etc
 	 */
 	new_level = _adjust_pwrlevel(pwr, new_level, &pwr->constraint);
+								  
 
 	/*
 	 * If thermal cycling is required and the new level hits the
@@ -1160,6 +1165,87 @@ static ssize_t kgsl_pwrctrl_bus_split_store(struct device *dev,
 	return count;
 }
 
+																	 
+								   
+			   
+ 
+														
+					
+		   
+										
+									
+ 
+
+																	  
+								   
+								   
+ 
+														
+						  
+								
+		 
+						
+
+					
+		   
+
+						
+							  
+
+									 
+		 
+			 
+
+									
+			
+
+							
+							   
+										   
+									
+
+							  
+	 
+			  
+ 
+
+
+												  
+								   
+								   
+ 
+					  
+														
+		 
+
+					
+		   
+
+								   
+		 
+			 
+
+							
+		 
+												 
+	 
+												   
+							  
+
+			  
+ 
+
+												 
+									  
+				  
+ 
+														
+					
+		   
+										
+												   
+ 
+
 static ssize_t kgsl_pwrctrl_gpu_model_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -1434,6 +1520,10 @@ static DEVICE_ATTR(force_rail_on, 0644,
 static DEVICE_ATTR(bus_split, 0644,
 	kgsl_pwrctrl_bus_split_show,
 	kgsl_pwrctrl_bus_split_store);
+										  
+									
+									  
+																
 static DEVICE_ATTR(force_no_nap, 0644,
 	kgsl_pwrctrl_force_no_nap_show,
 	kgsl_pwrctrl_force_no_nap_store);
@@ -1470,6 +1560,8 @@ static const struct device_attribute *pwrctrl_attr_list[] = {
 	&dev_attr_force_rail_on,
 	&dev_attr_force_no_nap,
 	&dev_attr_bus_split,
+							
+				
 	&dev_attr_gpu_model,
 	&dev_attr_gpu_busy_percentage,
 	&dev_attr_min_clock_mhz,
@@ -2416,6 +2508,8 @@ static int kgsl_pwrctrl_enable(struct kgsl_device *device)
 	if (pwr->wakeup_maxpwrlevel) {
 		level = pwr->max_pwrlevel;
 		pwr->wakeup_maxpwrlevel = 0;
+									  
+							   
 	} else {
 		level = pwr->num_pwrlevels - 1;
 	}
