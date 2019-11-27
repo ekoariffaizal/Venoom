@@ -26,6 +26,7 @@
 #include <linux/perf_event.h>
 #include <linux/context_tracking.h>
 #include <linux/rq_stats.h>
+#include <linux/mm.h>
 
 #include <asm/irq_regs.h>
 
@@ -462,7 +463,7 @@ update_ts_time_stats(int cpu, struct tick_sched *ts, ktime_t now, u64 *last_upda
 {
 	ktime_t delta;
 
-	if (ts->idle_active) {
+	if (ts->idle_active && cpu_online(cpu)) {
 		delta = ktime_sub(now, ts->idle_entrytime);
 		if (nr_iowait_cpu(cpu) > 0)
 			ts->iowait_sleeptime = ktime_add(ts->iowait_sleeptime, delta);
@@ -521,7 +522,7 @@ u64 get_cpu_idle_time_us(int cpu, u64 *last_update_time)
 		update_ts_time_stats(cpu, ts, now, last_update_time);
 		idle = ts->idle_sleeptime;
 	} else {
-		if (ts->idle_active && !nr_iowait_cpu(cpu)) {
+		if (ts->idle_active && !nr_iowait_cpu(cpu) && cpu_online(cpu)) {
 			ktime_t delta = ktime_sub(now, ts->idle_entrytime);
 
 			idle = ktime_add(ts->idle_sleeptime, delta);
@@ -562,7 +563,7 @@ u64 get_cpu_iowait_time_us(int cpu, u64 *last_update_time)
 		update_ts_time_stats(cpu, ts, now, last_update_time);
 		iowait = ts->iowait_sleeptime;
 	} else {
-		if (ts->idle_active && nr_iowait_cpu(cpu) > 0) {
+		if (ts->idle_active && nr_iowait_cpu(cpu) > 0 && cpu_online(cpu)) {
 			ktime_t delta = ktime_sub(now, ts->idle_entrytime);
 
 			iowait = ktime_add(ts->iowait_sleeptime, delta);
@@ -643,7 +644,7 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 	 */
 	delta = next_tick - basemono;
 	if (delta <= (u64)TICK_NSEC) {
-		tick.tv64 = 0;
+		tick = 0;
 		if (!ts->tick_stopped)
 			goto out;
 		if (delta == 0) {
@@ -688,10 +689,10 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 		expires = KTIME_MAX;
 
 	expires = min_t(u64, expires, next_tick);
-	tick.tv64 = expires;
+	tick = expires;
 
 	/* Skip reprogram of event if its not changed */
-	if (ts->tick_stopped && (expires == dev->next_event.tv64))
+	if (ts->tick_stopped && (expires == dev->next_event))
 		goto out;
 
 	/*
@@ -704,6 +705,7 @@ static ktime_t tick_nohz_stop_sched_tick(struct tick_sched *ts,
 	if (!ts->tick_stopped) {
 		nohz_balance_enter_idle(cpu);
 		calc_load_enter_idle();
+		quiet_vmstat();
 
 		ts->last_tick = hrtimer_get_expires(&ts->sched_timer);
 		ts->tick_stopped = 1;
@@ -781,14 +783,14 @@ static bool can_stop_idle_tick(int cpu, struct tick_sched *ts)
 	}
 
 	if (unlikely(ts->nohz_mode == NOHZ_MODE_INACTIVE)) {
-		ts->sleep_length = (ktime_t) { .tv64 = NSEC_PER_SEC/HZ };
+		ts->sleep_length = NSEC_PER_SEC/HZ;
 		return false;
 	}
 
 	if (need_resched())
 		return false;
 
-	if (unlikely(local_softirq_pending() && cpu_online(cpu))) {
+	if (unlikely(local_softirq_pending())) {
 		static int ratelimit;
 
 		if (ratelimit < 10 &&
@@ -823,8 +825,6 @@ static void __tick_nohz_idle_enter(struct tick_sched *ts)
 	ktime_t now, expires;
 	int cpu = smp_processor_id();
 
-	now = tick_nohz_start_idle(ts);
-
 #ifdef CONFIG_SMP
 	if (check_pending_deferrable_timers(cpu))
 		raise_softirq_irqoff(TIMER_SOFTIRQ);
@@ -833,10 +833,11 @@ static void __tick_nohz_idle_enter(struct tick_sched *ts)
 	if (can_stop_idle_tick(cpu, ts)) {
 		int was_stopped = ts->tick_stopped;
 
+		now = tick_nohz_start_idle(ts);
 		ts->idle_calls++;
 
 		expires = tick_nohz_stop_sched_tick(ts, now, cpu);
-		if (expires.tv64 > 0LL) {
+		if (expires > 0LL) {
 			ts->idle_sleeps++;
 			ts->idle_expires = expires;
 		}
@@ -897,6 +898,18 @@ void tick_nohz_irq_exit(void)
 		__tick_nohz_idle_enter(ts);
 	else
 		tick_nohz_full_update_tick(ts);
+}
+
+/**
+ * tick_nohz_get_next_hrtimer - return the next expiration time for the hrtimer
+ * or the tick, whatever that expires first. Note that, if the tick has been
+ * stopped, it returns the next hrtimer.
+ *
+ * Called from power state control code with interrupts disabled
+ */
+ktime_t tick_nohz_get_next_hrtimer(void)
+{
+	return __this_cpu_read(tick_cpu_device.evtdev)->next_event;
 }
 
 /**
@@ -985,7 +998,7 @@ static void tick_nohz_handler(struct clock_event_device *dev)
 	struct pt_regs *regs = get_irq_regs();
 	ktime_t now = ktime_get();
 
-	dev->next_event.tv64 = KTIME_MAX;
+	dev->next_event = KTIME_MAX;
 
 	tick_sched_do_timer(now);
 	tick_sched_handle(ts, regs);
@@ -1058,7 +1071,7 @@ static void tick_nohz_kick_tick(struct tick_sched *ts, ktime_t now)
 	 * already reached or less/equal than the tick period.
 	 */
 	delta =	ktime_sub(hrtimer_get_expires(&ts->sched_timer), now);
-	if (delta.tv64 <= tick_period.tv64)
+	if (delta <= tick_period)
 		return;
 
 	tick_nohz_restart(ts, now);
