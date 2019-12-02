@@ -1,7 +1,7 @@
 #!/bin/bash
 kernel_dir=$PWD
 export V="v1.5"
-export CONFIG_FILE="tulip_defconfig"
+export CONFIG_FILE="ven_defconfig"
 export ARCH=arm64
 export SUBARCH=arm64
 export KBUILD_BUILD_USER=Exo
@@ -28,7 +28,7 @@ cd $kernel_dir
 
 
 make_a_fucking_defconfig() {
-	make O=out tulip_defconfig -j4
+	make O=out ven_defconfig -j4
 }
 
 compile() {

@@ -1,4 +1,5 @@
 /* Copyright (c) 2016-2017, Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -362,9 +363,7 @@ struct usbpd {
 	struct device		dev;
 	struct workqueue_struct	*wq;
 	struct work_struct	sm_work;
-#ifdef CONFIG_MACH_LONGCHEER
 	struct delayed_work 	vbus_work;
-#endif
 	struct hrtimer		timer;
 	bool			sm_queued;
 
@@ -454,6 +453,14 @@ struct usbpd {
 };
 
 static LIST_HEAD(_usbpd);	/* useful for debugging */
+
+static void usbpd_device_release(struct device *dev)
+{
+	/*
+	 * Empty function to silence WARN_ON upon put_device on a device
+	 * without a release function.
+	 */
+}
 
 static const unsigned int usbpd_extcon_cable[] = {
 	EXTCON_USB,
@@ -2852,7 +2859,6 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 	}
 
 	typec_mode = val.intval;
-
 	ret = power_supply_get_property(pd->usb_psy,
 			POWER_SUPPLY_PROP_PE_START, &val);
 	if (ret) {
@@ -2860,7 +2866,6 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 				ret);
 		return ret;
 	}
-
 	/* Don't proceed if PE_START=0 as other props may still change */
 	if (!val.intval && !pd->pd_connected &&
 			typec_mode != POWER_SUPPLY_TYPEC_NONE)
@@ -2872,7 +2877,6 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 		usbpd_err(&pd->dev, "Unable to read USB PRESENT: %d\n", ret);
 		return ret;
 	}
-
 	pd->vbus_present = val.intval;
 
 	ret = power_supply_get_property(pd->usb_psy,
@@ -2881,7 +2885,6 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 		usbpd_err(&pd->dev, "Unable to read USB TYPE: %d\n", ret);
 		return ret;
 	}
-
 	pd->psy_type = val.intval;
 
 	/*
@@ -2972,7 +2975,6 @@ static int psy_changed(struct notifier_block *nb, unsigned long evt, void *ptr)
 				typec_mode);
 		break;
 	}
-
 	/* queue state machine due to CC state change */
 	kick_sm(pd, 0);
 	return 0;
@@ -3194,7 +3196,6 @@ static int usbpd_dr_prop_writeable(struct dual_role_phy_instance *dual_role,
 
 	switch (prop) {
 	case DUAL_ROLE_PROP_MODE:
-		return 1;
 	case DUAL_ROLE_PROP_DR:
 	case DUAL_ROLE_PROP_PR:
 		if (pd)
@@ -3727,7 +3728,9 @@ static ssize_t get_battery_status_show(struct device *dev,
 	return snprintf(buf, PAGE_SIZE, "%d\n", pd->battery_sts_dobj);
 }
 static DEVICE_ATTR_RW(get_battery_status);
-#ifdef CONFIG_MACH_LONGCHEER
+
+
+/*hguan add*/
 struct usbpd *pd_lobal;
 unsigned int pd_vbus_ctrl = 0;
 
@@ -3736,7 +3739,8 @@ MODULE_PARM_DESC(pd_vbus_ctrl, "PD VBUS CONTROL");
 
 void pd_vbus_reset(struct usbpd *pd)
 {
-	if (!pd) {
+	if (!pd)
+	{
 		pr_err("pd_vbus_reset, pd is null\n");
 		return;
 	}
@@ -3746,7 +3750,9 @@ void pd_vbus_reset(struct usbpd *pd)
 		if(0 == pd_vbus_ctrl) pd_vbus_ctrl = 500;
 		msleep(pd_vbus_ctrl);
 		enable_vbus(pd);
-	} else {
+	}
+	else
+	{
 		pr_err("pd_vbus is not enabled yet\n");
 	}
 }
@@ -3772,7 +3778,7 @@ void kick_usbpd_vbus_sm(void)
 }
 
 static ssize_t pd_vbus_show(struct device *dev, struct device_attribute *attr,
-	char *buf)
+ char *buf)
 {
 	struct usbpd *pd = dev_get_drvdata(dev);
 	pr_err("pd_vbus_show handle state %s, vbus %d\n",
@@ -3783,7 +3789,7 @@ static ssize_t pd_vbus_show(struct device *dev, struct device_attribute *attr,
 }
 
 static ssize_t pd_vbus_store(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t size)
+ struct device_attribute *attr, const char *buf, size_t size)
 {
 	int val = 0;
 
@@ -3798,7 +3804,9 @@ static ssize_t pd_vbus_store(struct device *dev,
 	return size;
 }
 static DEVICE_ATTR_RW(pd_vbus);
-#endif
+
+/*hguan add end*/
+
 static struct attribute *usbpd_attrs[] = {
 	&dev_attr_contract.attr,
 	&dev_attr_initial_pr.attr,
@@ -3823,9 +3831,7 @@ static struct attribute *usbpd_attrs[] = {
 	&dev_attr_rx_ado.attr,
 	&dev_attr_get_battery_cap.attr,
 	&dev_attr_get_battery_status.attr,
-#ifdef CONFIG_MACH_LONGCHEER
 	&dev_attr_pd_vbus.attr,
-#endif
 	NULL,
 };
 ATTRIBUTE_GROUPS(usbpd);
@@ -3920,6 +3926,7 @@ struct usbpd *usbpd_create(struct device *parent)
 	device_initialize(&pd->dev);
 	pd->dev.class = &usbpd_class;
 	pd->dev.parent = parent;
+	pd->dev.release = usbpd_device_release;
 	dev_set_drvdata(&pd->dev, pd);
 
 	ret = dev_set_name(&pd->dev, "usbpd%d", num_pd_instances++);
@@ -3932,7 +3939,7 @@ struct usbpd *usbpd_create(struct device *parent)
 
 	ret = device_add(&pd->dev);
 	if (ret)
-		goto free_pd;
+		goto put_pd;
 
 	pd->wq = alloc_ordered_workqueue("usbpd_wq", WQ_FREEZABLE | WQ_HIGHPRI);
 	if (!pd->wq) {
@@ -3940,9 +3947,7 @@ struct usbpd *usbpd_create(struct device *parent)
 		goto del_pd;
 	}
 	INIT_WORK(&pd->sm_work, usbpd_sm);
-#ifdef CONFIG_MACH_LONGCHEER
 	INIT_DELAYED_WORK(&pd->vbus_work,usbpd_vbus_sm);
-#endif
 	hrtimer_init(&pd->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	pd->timer.function = pd_timeout;
 	mutex_init(&pd->swap_lock);
@@ -4066,9 +4071,7 @@ struct usbpd *usbpd_create(struct device *parent)
 
 	/* force read initial power_supply values */
 	psy_changed(&pd->psy_nb, PSY_EVENT_PROP_CHANGED, pd->usb_psy);
-#ifdef CONFIG_MACH_LONGCHEER
 	pd_lobal = pd;
-#endif
 	return pd;
 
 del_inst:
@@ -4079,6 +4082,8 @@ destroy_wq:
 	destroy_workqueue(pd->wq);
 del_pd:
 	device_del(&pd->dev);
+put_pd:
+	put_device(&pd->dev);
 free_pd:
 	num_pd_instances--;
 	kfree(pd);

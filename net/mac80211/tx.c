@@ -164,7 +164,7 @@ static __le16 ieee80211_duration(struct ieee80211_tx_data *tx,
 			if (r->flags & IEEE80211_RATE_MANDATORY_A)
 				mrate = r->bitrate;
 			break;
-		case IEEE80211_BAND_60GHZ:
+		case NL80211_BAND_60GHZ:
 			/* TODO, for now fall through */
 		case NUM_NL80211_BANDS:
 			WARN_ON(1);
@@ -798,8 +798,12 @@ ieee80211_tx_h_sequence(struct ieee80211_tx_data *tx)
 	 * number, if we have no matching interface then we
 	 * neither assign one ourselves nor ask the driver to.
 	 */
-	if (unlikely(info->control.vif->type == NL80211_IFTYPE_MONITOR))
+	if (unlikely((info->flags & IEEE80211_TX_CTL_INJECTED) &&
+	   !(tx->sdata->u.mntr_flags & MONITOR_FLAG_COOK_FRAMES))) {
+		if (!ieee80211_has_morefrags(hdr->frame_control))
+			info->flags |= IEEE80211_TX_CTL_NO_ACK;
 		return TX_CONTINUE;
+	}
 
 	if (unlikely(ieee80211_is_ctl(hdr->frame_control)))
 		return TX_CONTINUE;

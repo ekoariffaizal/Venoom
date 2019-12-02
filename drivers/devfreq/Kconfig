@@ -84,6 +84,7 @@ config SIMPLE_GPU_ALGORITHM
 	bool "Simple GPU algorithm"
 	depends on DEVFREQ_GOV_MSM_ADRENO_TZ
 	help
+    default y
 	  Simple user configurable GPU controlling algorithm
 
 config QCOM_BIMC_BWMON

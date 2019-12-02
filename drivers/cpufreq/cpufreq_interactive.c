@@ -2,6 +2,7 @@
  * drivers/cpufreq/cpufreq_interactive.c
  *
  * Copyright (C) 2010 Google, Inc.
+								  
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -31,6 +32,7 @@
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
+						 
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/cpufreq_interactive.h>
@@ -667,6 +669,13 @@ static void cpufreq_interactive_timer(unsigned long data)
 					 ppol->policy->cur, new_freq);
 
 	ppol->target_freq = new_freq;
+											 
+												
+														  
+													
+										  
+  
+
 	spin_unlock_irqrestore(&ppol->target_freq_lock, flags);
 	spin_lock_irqsave(&speedchange_cpumask_lock, flags);
 	cpumask_set_cpu(max_cpu, &speedchange_cpumask);
@@ -1663,6 +1672,7 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		tunables = common_tunables;
 
 	BUG_ON(!tunables && (event != CPUFREQ_GOV_POLICY_INIT));
+				 
 
 	switch (event) {
 	case CPUFREQ_GOV_POLICY_INIT:
@@ -1692,6 +1702,8 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		policy->governor_data = tunables;
 		if (!have_governor_per_policy())
 			common_tunables = tunables;
+										 
+   
 
 		rc = sysfs_create_group(get_governor_parent_kobj(policy),
 				get_sysfs_attr());
@@ -1700,6 +1712,8 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 			policy->governor_data = NULL;
 			if (!have_governor_per_policy())
 				common_tunables = NULL;
+								 
+	
 			return rc;
 		}
 
@@ -1733,6 +1747,8 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 			sysfs_remove_group(get_governor_parent_kobj(policy),
 					get_sysfs_attr());
 
+								   
+								 
 			common_tunables = NULL;
 		}
 
@@ -1795,6 +1811,11 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 	case CPUFREQ_GOV_LIMITS:
 		ppol = per_cpu(polinfo, policy->cpu);
 
+											   
+																							   
+		  
+																					 
+   
 		__cpufreq_driver_target(policy,
 				ppol->target_freq, CPUFREQ_RELATION_L);
 
