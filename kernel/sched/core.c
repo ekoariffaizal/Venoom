@@ -96,7 +96,6 @@
 #include <trace/events/sched.h>
 #include "walt.h"
 
-ATOMIC_NOTIFIER_HEAD(load_alert_notifier_head);
 static atomic_t __su_instances;
 
 int su_instances(void)
@@ -1230,10 +1229,27 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
 	p->nr_cpus_allowed = cpumask_weight(new_mask);
 }
 
+static const struct cpumask *get_adjusted_cpumask(const struct task_struct *p,
+	const struct cpumask *req_mask)
+{
+	/* Force all performance-critical kthreads onto the big cluster */
+	if (p->flags & PF_PERF_CRITICAL)
+		return cpu_perf_mask;
+
+	/* Force all trivial, unbound kthreads onto the little cluster */
+	if (p->flags & PF_KTHREAD && p->pid != 1 &&
+		cpumask_equal(req_mask, cpu_all_mask))
+		return cpu_lp_mask;
+
+	return req_mask;
+}
+
 void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 {
 	struct rq *rq = task_rq(p);
 	bool queued, running;
+
+	new_mask = get_adjusted_cpumask(p, new_mask);
 
 	lockdep_assert_held(&p->pi_lock);
 
@@ -1275,6 +1291,8 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	struct rq *rq;
 	unsigned int dest_cpu;
 	int ret = 0;
+
+	new_mask = get_adjusted_cpumask(p, new_mask);
 
 	rq = task_rq_lock(p, &flags);
 
@@ -1389,7 +1407,9 @@ static void __migrate_swap_task(struct task_struct *p, int cpu)
 
 		p->on_rq = TASK_ON_RQ_MIGRATING;
 		deactivate_task(src_rq, p, 0);
+								  
 		set_task_cpu(p, cpu);
+							   
 		activate_task(dst_rq, p, 0);
 		p->on_rq = TASK_ON_RQ_QUEUED;
 		check_preempt_curr(dst_rq, p, 0);
@@ -8075,6 +8095,7 @@ void __init sched_init(void)
 	 * when this runqueue becomes "idle".
 	 */
 	init_idle(current, smp_processor_id());
+
 	calc_load_update = jiffies + LOAD_FREQ;
 
 #ifdef CONFIG_SMP
