@@ -128,7 +128,7 @@ void su_exit(void)
 	atomic_dec(&__su_instances);
 }
 
-ATOMIC_NOTIFIER_HEAD(load_alert_notifier_head);
+											   
 DEFINE_MUTEX(sched_domains_mutex);
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
@@ -1408,9 +1408,9 @@ static void __migrate_swap_task(struct task_struct *p, int cpu)
 
 		p->on_rq = TASK_ON_RQ_MIGRATING;
 		deactivate_task(src_rq, p, 0);
-								  
+		  
 		set_task_cpu(p, cpu);
-							   
+		  
 		activate_task(dst_rq, p, 0);
 		p->on_rq = TASK_ON_RQ_QUEUED;
 		check_preempt_curr(dst_rq, p, 0);
