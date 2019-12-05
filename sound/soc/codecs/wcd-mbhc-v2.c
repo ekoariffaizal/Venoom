@@ -1320,9 +1320,11 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	int rc, spl_hs_count = 0;
 	int cross_conn;
 	int try = 0;
-	int retry = 0;
-	int headset_cnt = 0;
-
+#ifndef CONFIG_MACH_LONGCHEER
+	int try_check = 0;
+#else
+	int iRetryCount;
+#endif
 	pr_debug("%s: enter\n", __func__);
 
 	mbhc = container_of(work, struct wcd_mbhc, correct_plug_swch);
@@ -1399,7 +1401,9 @@ correct_plug_type:
 #ifndef CONFIG_MACH_LONGCHEER
 	timeout = jiffies + msecs_to_jiffies(HS_DETECT_PLUG_TIME_MS);
 	while (!time_after(jiffies, timeout)) {
-		retry++;
+#else
+	for(iRetryCount = 0; iRetryCount < 5; iRetryCount++) {
+#endif										   
 		if (mbhc->hs_detect_work_stop) {
 			pr_debug("%s: stop requested: %d\n", __func__,
 					mbhc->hs_detect_work_stop);
@@ -1452,7 +1456,7 @@ correct_plug_type:
 		 * instead of hogging system by contineous polling, wait for
 		 * sometime and re-check stop request again.
 		 */
-		msleep(5 * retry);
+		msleep(180);
 		if (hs_comp_res && (spl_hs_count < WCD_MBHC_SPL_HS_CNT)) {
 			spl_hs = wcd_mbhc_check_for_spl_headset(mbhc,
 								&spl_hs_count);
@@ -1464,17 +1468,6 @@ correct_plug_type:
 			}
 		}
 
-		/*
-		 * It's pretty certain to be a headset after being detected
-		 * as such 10 times, so exit early to reduce detection
-		 * latency.
-		 */
-		if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
-			if (++headset_cnt == 10) {
-				wrk_complete = false;
-				break;
-			}
-		}
 		if ((!hs_comp_res) && (!is_pa_on)) {
 			/* Check for cross connection*/
 			ret = wcd_check_cross_conn(mbhc);
