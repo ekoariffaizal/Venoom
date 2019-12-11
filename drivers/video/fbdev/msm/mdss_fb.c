@@ -59,7 +59,7 @@
 #include "mdss_smmu.h"
 #include "mdss_mdp.h"
 #include "dsi_access.h"
-#endif
+
 
 #ifdef CONFIG_KLAPSE
 #include <linux/klapse.h>
