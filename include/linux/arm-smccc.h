@@ -60,8 +60,6 @@
 #define ARM_SMCCC_OWNER_TRUSTED_APP_END	49
 #define ARM_SMCCC_OWNER_TRUSTED_OS	50
 #define ARM_SMCCC_OWNER_TRUSTED_OS_END	63
-
-
 #define ARM_SMCCC_VERSION_1_0		0x10000
 #define ARM_SMCCC_VERSION_1_1		0x10001
 
@@ -84,8 +82,6 @@
 
 #include <linux/linkage.h>
 #include <linux/types.h>
-
-
 /**
  * struct arm_smccc_res - Result from SMC/HVC call
  * @a0-a3 result values from registers 0 to 3
@@ -298,8 +294,6 @@ static inline unsigned long __invoke_psci_fn_smc(unsigned long function_id,
  * from register 0 to 3 on return from the HVC instruction if not NULL.
  */
 #define arm_smccc_1_1_hvc(...)	__arm_smccc_1_1(SMCCC_HVC_INST, __VA_ARGS__)
-
-
 /* Return codes defined in ARM DEN 0070A */
 #define SMCCC_RET_SUCCESS			0
 #define SMCCC_RET_NOT_SUPPORTED			-1

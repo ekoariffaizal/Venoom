@@ -50,13 +50,11 @@
  * granting userspace undue privileges. There are three categories of privilege.
  *
  * First, commands which are explicitly defined as privileged or which should
- * only be used by the kernel driver. The parser generally rejects such
- * commands, though it may allow some from the drm master process.
+ * only be used by the kernel driver. The parser rejects such commands
  *
  * Second, commands which access registers. To support correct/enhanced
  * userspace functionality, particularly certain OpenGL extensions, the parser
- * provides a whitelist of registers which userspace may safely access (for both
- * normal and drm master processes).
+ * provides a whitelist of registers which userspace may safely access
  *
  * Third, commands which access privileged memory (i.e. GGTT, HWS page, etc).
  * The parser always rejects such commands.
@@ -81,9 +79,9 @@
  * in the per-ring command tables.
  *
  * Other command table entries map fairly directly to high level categories
- * mentioned above: rejected, master-only, register whitelist. The parser
- * implements a number of checks, including the privileged memory checks, via a
- * general bitmasking mechanism.
+ * mentioned above: rejected, register whitelist. The parser implements a number
+ * of checks, including the privileged memory checks, via a general bitmasking
+ * mechanism.
  */
 
 #define STD_MI_OPCODE_MASK  0xFF800000
@@ -109,14 +107,13 @@
 #define R CMD_DESC_REJECT
 #define W CMD_DESC_REGISTER
 #define B CMD_DESC_BITMASK
-#define M CMD_DESC_MASTER
 
 /*            Command                          Mask   Fixed Len   Action
 	      ---------------------------------------------------------- */
-static const struct drm_i915_cmd_descriptor common_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_common_cmds[] = {
 	CMD(  MI_NOOP,                          SMI,    F,  1,      S  ),
 	CMD(  MI_USER_INTERRUPT,                SMI,    F,  1,      R  ),
-	CMD(  MI_WAIT_FOR_EVENT,                SMI,    F,  1,      M  ),
+	CMD(  MI_WAIT_FOR_EVENT,                SMI,    F,  1,      R  ),
 	CMD(  MI_ARB_CHECK,                     SMI,    F,  1,      S  ),
 	CMD(  MI_REPORT_HEAD,                   SMI,    F,  1,      S  ),
 	CMD(  MI_SUSPEND_FLUSH,                 SMI,    F,  1,      S  ),
@@ -146,7 +143,7 @@ static const struct drm_i915_cmd_descriptor common_cmds[] = {
 	CMD(  MI_BATCH_BUFFER_START,            SMI,   !F,  0xFF,   S  ),
 };
 
-static const struct drm_i915_cmd_descriptor render_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_render_cmds[] = {
 	CMD(  MI_FLUSH,                         SMI,    F,  1,      S  ),
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_PREDICATE,                     SMI,    F,  1,      S  ),
@@ -213,7 +210,7 @@ static const struct drm_i915_cmd_descriptor hsw_render_cmds[] = {
 	CMD(  MI_URB_ATOMIC_ALLOC,              SMI,    F,  1,      S  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_RS_CONTEXT,                    SMI,    F,  1,      S  ),
-	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   M  ),
+	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_SCAN_LINES_EXCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_REGISTER_REG,             SMI,   !F,  0xFF,   R  ),
 	CMD(  MI_RS_STORE_DATA_IMM,             SMI,   !F,  0xFF,   S  ),
@@ -229,7 +226,7 @@ static const struct drm_i915_cmd_descriptor hsw_render_cmds[] = {
 	CMD(  GFX_OP_3DSTATE_BINDING_TABLE_EDIT_PS,  S3D,   !F,  0x1FF,  S  ),
 };
 
-static const struct drm_i915_cmd_descriptor video_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_video_cmds[] = {
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0xFF,   B,
@@ -273,7 +270,7 @@ static const struct drm_i915_cmd_descriptor video_cmds[] = {
 	CMD(  MFX_WAIT,                         SMFX,   F,  1,      S  ),
 };
 
-static const struct drm_i915_cmd_descriptor vecs_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_vecs_cmds[] = {
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0xFF,   B,
@@ -311,7 +308,7 @@ static const struct drm_i915_cmd_descriptor vecs_cmds[] = {
 	      }},						       ),
 };
 
-static const struct drm_i915_cmd_descriptor blt_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_blt_cmds[] = {
 	CMD(  MI_DISPLAY_FLIP,                  SMI,   !F,  0xFF,   R  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0x3FF,  B,
 	      .bits = {{
@@ -345,7 +342,7 @@ static const struct drm_i915_cmd_descriptor blt_cmds[] = {
 };
 
 static const struct drm_i915_cmd_descriptor hsw_blt_cmds[] = {
-	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   M  ),
+	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_SCAN_LINES_EXCL,          SMI,   !F,  0x3F,   R  ),
 };
 
@@ -411,37 +408,36 @@ static const struct drm_i915_cmd_descriptor gen9_blt_cmds[] = {
 #undef R
 #undef W
 #undef B
-#undef M
 
-static const struct drm_i915_cmd_table gen7_render_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ render_cmds, ARRAY_SIZE(render_cmds) },
+static const struct drm_i915_cmd_table gen7_render_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_render_cmds, ARRAY_SIZE(gen7_render_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_render_ring_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ render_cmds, ARRAY_SIZE(render_cmds) },
+static const struct drm_i915_cmd_table hsw_render_ring_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_render_cmds, ARRAY_SIZE(gen7_render_cmds) },
 	{ hsw_render_cmds, ARRAY_SIZE(hsw_render_cmds) },
 };
 
-static const struct drm_i915_cmd_table gen7_video_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ video_cmds, ARRAY_SIZE(video_cmds) },
+static const struct drm_i915_cmd_table gen7_video_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_video_cmds, ARRAY_SIZE(gen7_video_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_vebox_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ vecs_cmds, ARRAY_SIZE(vecs_cmds) },
+static const struct drm_i915_cmd_table hsw_vebox_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_vecs_cmds, ARRAY_SIZE(gen7_vecs_cmds) },
 };
 
-static const struct drm_i915_cmd_table gen7_blt_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ blt_cmds, ARRAY_SIZE(blt_cmds) },
+static const struct drm_i915_cmd_table gen7_blt_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_blt_cmds, ARRAY_SIZE(gen7_blt_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_blt_ring_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ blt_cmds, ARRAY_SIZE(blt_cmds) },
+static const struct drm_i915_cmd_table hsw_blt_ring_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_blt_cmds, ARRAY_SIZE(gen7_blt_cmds) },
 	{ hsw_blt_cmds, ARRAY_SIZE(hsw_blt_cmds) },
 };
 
@@ -539,7 +535,6 @@ static const struct drm_i915_reg_descriptor gen7_render_regs[] = {
 static const struct drm_i915_reg_descriptor gen7_blt_regs[] = {
 	REG32(BCS_SWCTRL),
 };
-
 static const struct drm_i915_reg_descriptor ivb_master_regs[] = {
 	REG32(FORCEWAKE_MT),
 	REG32(DERRMR),
@@ -572,7 +567,6 @@ static const struct drm_i915_reg_descriptor gen9_blt_regs[] = {
 	REG64_IDX(BCS_GPR, 13),
 	REG64_IDX(BCS_GPR, 14),
 	REG64_IDX(BCS_GPR, 15),
-
 };
 
 #undef REG64
@@ -702,9 +696,7 @@ static bool check_sorted(int ring_id,
 
 static bool validate_regs_sorted(struct intel_engine_cs *ring)
 {
-	return check_sorted(ring->id, ring->reg_table, ring->reg_count) &&
-		check_sorted(ring->id, ring->master_reg_table,
-			     ring->master_reg_count);
+	return check_sorted(ring->id, ring->reg_table, ring->reg_count);
 }
 
 struct cmd_node {
@@ -791,37 +783,28 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
 	switch (ring->id) {
 	case RCS:
 		if (IS_HASWELL(ring->dev)) {
-			cmd_tables = hsw_render_ring_cmds;
+			cmd_tables = hsw_render_ring_cmd_table;
 			cmd_table_count =
-				ARRAY_SIZE(hsw_render_ring_cmds);
+				ARRAY_SIZE(hsw_render_ring_cmd_table);
 		} else {
-			cmd_tables = gen7_render_cmds;
-			cmd_table_count = ARRAY_SIZE(gen7_render_cmds);
+			cmd_tables = gen7_render_cmd_table;
+			cmd_table_count = ARRAY_SIZE(gen7_render_cmd_table);
 		}
 
 		ring->reg_table = gen7_render_regs;
 		ring->reg_count = ARRAY_SIZE(gen7_render_regs);
 
-		if (IS_HASWELL(ring->dev)) {
-			ring->master_reg_table = hsw_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(hsw_master_regs);
-		} else {
-			ring->master_reg_table = ivb_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(ivb_master_regs);
-		}
-
 		ring->get_cmd_length_mask = gen7_render_get_cmd_length_mask;
 		break;
 	case VCS:
-		cmd_tables = gen7_video_cmds;
-		cmd_table_count = ARRAY_SIZE(gen7_video_cmds);
+		cmd_tables = gen7_video_cmd_table;
+		cmd_table_count = ARRAY_SIZE(gen7_video_cmd_table);
 		ring->get_cmd_length_mask = gen7_bsd_get_cmd_length_mask;
 		break;
 	case BCS:
 		if (IS_HASWELL(ring->dev)) {
 			cmd_tables = hsw_blt_ring_cmds;
 			cmd_table_count = ARRAY_SIZE(hsw_blt_ring_cmds);
-
 		ring->get_cmd_length_mask = gen7_blt_get_cmd_length_mask;
 		if (IS_GEN9(ring->dev)) {
 			cmd_tables = gen9_blt_cmd_table;
@@ -835,10 +818,9 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
 		else if (IS_HASWELL(ring->dev)) {
 			cmd_tables = hsw_blt_ring_cmd_table;
 			cmd_table_count = ARRAY_SIZE(hsw_blt_ring_cmd_table);
-
 		} else {
-			cmd_tables = gen7_blt_cmds;
-			cmd_table_count = ARRAY_SIZE(gen7_blt_cmds);
+			cmd_tables = gen7_blt_cmd_table;
+			cmd_table_count = ARRAY_SIZE(gen7_blt_cmd_table);
 		}
 
 		if (IS_GEN9(ring->dev)) {
@@ -853,16 +835,16 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
 			ring->master_reg_table = hsw_master_regs;
 			ring->master_reg_count = ARRAY_SIZE(hsw_master_regs);
 		} else {
-			ring->master_reg_table = ivb_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(ivb_master_regs);
+			ring->reg_table = gen7_blt_regs;
+			ring->reg_count = ARRAY_SIZE(gen7_blt_regs);
 		}
 
 		ring->get_cmd_length_mask = gen7_blt_get_cmd_length_mask;
 
 		break;
 	case VECS:
-		cmd_tables = hsw_vebox_cmds;
-		cmd_table_count = ARRAY_SIZE(hsw_vebox_cmds);
+		cmd_tables = hsw_vebox_cmd_table;
+		cmd_table_count = ARRAY_SIZE(hsw_vebox_cmd_table);
 		/* VECS can use the same length_mask function as VCS */
 		ring->get_cmd_length_mask = gen7_bsd_get_cmd_length_mask;
 		break;
@@ -1067,17 +1049,10 @@ unpin_src:
 static int check_cmd(const struct intel_engine_cs *ring,
 		      const struct drm_i915_cmd_descriptor *desc,
 		      const u32 *cmd, u32 length,
-		      const bool is_master,
 		      bool *oacontrol_set)
 {
 	if (desc->flags & CMD_DESC_REJECT) {
 		DRM_DEBUG_DRIVER("CMD: Rejected command: 0x%08X\n", *cmd);
-		return false;
-	}
-
-	if ((desc->flags & CMD_DESC_MASTER) && !is_master) {
-		DRM_DEBUG_DRIVER("CMD: Rejected master-only command: 0x%08X\n",
-				 *cmd);
 		return false;
 	}
 
@@ -1096,11 +1071,6 @@ static int check_cmd(const struct intel_engine_cs *ring,
 			const struct drm_i915_reg_descriptor *reg =
 				find_reg(ring->reg_table, ring->reg_count,
 					 reg_addr);
-
-			if (!reg && is_master)
-				reg = find_reg(ring->master_reg_table,
-					       ring->master_reg_count,
-					       reg_addr);
 
 			if (!reg) {
 				DRM_DEBUG_DRIVER("CMD: Rejected register 0x%08X in command: 0x%08X (ring=%d)\n",
@@ -1257,6 +1227,7 @@ static void init_whitelist(struct intel_context *ctx, u32 batch_len)
 
 	if (batch_cmds <= ctx->jump_whitelist_cmds) {
 		memset(ctx->jump_whitelist, 0, exact_size * sizeof(u32));
+		bitmap_zero(ctx->jump_whitelist, batch_cmds);
 		return;
 	}
 
@@ -1278,6 +1249,7 @@ again:
 	DRM_DEBUG("CMD: Failed to extend whitelist. BB_START may be disallowed\n");
 	memset(ctx->jump_whitelist, 0,
 		BITS_TO_LONGS(ctx->jump_whitelist_cmds) * sizeof(u32));
+	bitmap_zero(ctx->jump_whitelist, ctx->jump_whitelist_cmds);
 
 	return;
 }
@@ -1364,7 +1336,6 @@ int i915_parse_cmds(struct intel_context *ctx,
 
 		if (!check_cmd(ring, desc, cmd, length, &oacontrol_set)) {
 			ret = CMDPARSER_USES_GGTT(ring->dev) ? -EINVAL : -EACCES;
-
 			break;
 		}
 

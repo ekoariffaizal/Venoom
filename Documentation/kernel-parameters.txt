@@ -2246,6 +2246,7 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 					       spectre_v2_user=off [X86]
 					       spec_store_bypass_disable=off [X86]
 					       mds=off [X86]
+					       tsx_async_abort=off [X86]
 
 			auto (default)
 				Mitigate all CPU vulnerabilities, but leave SMT
@@ -4165,7 +4166,6 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 
 			See Documentation/hw-vuln/tsx_async_abort.rst
 			for more details.
-
 
 	tsx_async_abort= [X86,INTEL] Control mitigation for the TSX Async
 			Abort (TAA) vulnerability.

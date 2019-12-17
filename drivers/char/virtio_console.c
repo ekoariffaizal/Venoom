@@ -2006,6 +2006,25 @@ static void virtcons_remove(struct virtio_device *vdev)
 	else
 		cancel_work_sync(&portdev->config_work);
 
+
+	list_for_each_entry_safe(port, port2, &portdev->ports, list)
+		unplug_port(port);
+
+	unregister_chrdev(portdev->chr_major, "virtio-portsdev");
+
+	/*
+	 * When yanking out a device, we immediately lose the
+	 * (device-side) queues.  So there's no point in keeping the
+	 * guest side around till we drop our final reference.  This
+	 * also means that any ports which are in an open state will
+	 * have to just stop using the port, as the vqs are going
+	 * away.
+	 */
+	remove_vqs(portdev);
+	kfree(portdev);
+}
+
+
 	list_for_each_entry_safe(port, port2, &portdev->ports, list)
 		unplug_port(port);
 
@@ -2149,6 +2168,7 @@ free:
 fail:
 	return err;
 }
+
 static struct virtio_device_id id_table[] = {
 	{ VIRTIO_ID_CONSOLE, VIRTIO_DEV_ANY_ID },
 	{ 0 },
