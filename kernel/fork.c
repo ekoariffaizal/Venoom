@@ -78,7 +78,6 @@
 #include <linux/compiler.h>
 #include <linux/sysctl.h>
 #include <linux/kcov.h>
-#include <linux/cpufreq_times.h>
 #include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 
