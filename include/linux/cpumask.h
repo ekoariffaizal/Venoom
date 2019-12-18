@@ -88,16 +88,11 @@ extern int nr_cpu_ids;
  *    only one CPU.
  */
 
-extern struct cpumask __cpu_possible_mask;
-extern struct cpumask __cpu_online_mask;
-extern struct cpumask __cpu_present_mask;
-extern struct cpumask __cpu_active_mask;
-extern struct cpumask __cpu_isolated_mask;
-#define cpu_possible_mask ((const struct cpumask *)&__cpu_possible_mask)
-#define cpu_online_mask   ((const struct cpumask *)&__cpu_online_mask)
-#define cpu_present_mask  ((const struct cpumask *)&__cpu_present_mask)
-#define cpu_active_mask   ((const struct cpumask *)&__cpu_active_mask)
-#define cpu_isolated_mask ((const struct cpumask *)&__cpu_isolated_mask)
+extern const struct cpumask *const cpu_possible_mask;
+extern const struct cpumask *const cpu_online_mask;
+extern const struct cpumask *const cpu_present_mask;
+extern const struct cpumask *const cpu_active_mask;
+extern const struct cpumask *const cpu_isolated_mask;
 extern const struct cpumask *const cpu_lp_mask;
 extern const struct cpumask *const cpu_perf_mask;
 
