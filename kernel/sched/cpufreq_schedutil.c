@@ -136,9 +136,8 @@ static void sugov_update_commit(struct sugov_policy *sg_policy, u64 time,
 		return;
 	}
 
-	policy->cur = next_freq;
-//	trace_cpu_frequency(next_freq, smp_processor_id());
-}
+	sg_policy->next_freq = next_freq;
+	sg_policy->last_freq_update_time = time;
 
 	if (policy->fast_switch_enabled) {
 		next_freq = cpufreq_driver_fast_switch(policy, next_freq);

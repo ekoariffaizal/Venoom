@@ -1125,7 +1125,7 @@ static void pwq_activate_delayed_work(struct work_struct *work)
 {
 	struct pool_workqueue *pwq = get_work_pwq(work);
 
-//	trace_workqueue_activate_work(work);
+	trace_workqueue_activate_work(work);
 	if (list_empty(&pwq->pool->worklist))
 		pwq->pool->watchdog_ts = jiffies;
 	move_linked_works(work, &pwq->pool->worklist, NULL);
@@ -1422,7 +1422,7 @@ retry:
 	}
 
 	/* pwq determined, queue */
-//	trace_workqueue_queue_work(req_cpu, pwq, work);
+	trace_workqueue_queue_work(req_cpu, pwq, work);
 
 	if (WARN_ON(!list_empty(&work->entry))) {
 		spin_unlock(&pwq->pool->lock);
@@ -1433,7 +1433,7 @@ retry:
 	work_flags = work_color_to_flags(pwq->work_color);
 
 	if (likely(pwq->nr_active < pwq->max_active)) {
-//		trace_workqueue_activate_work(work);
+		trace_workqueue_activate_work(work);
 		pwq->nr_active++;
 		worklist = &pwq->pool->worklist;
 		if (list_empty(worklist))
@@ -2071,36 +2071,13 @@ __acquires(&pool->lock)
 
 	lock_map_acquire_read(&pwq->wq->lockdep_map);
 	lock_map_acquire(&lockdep_map);
-
-	/*
-	 * Strictly speaking we should mark the invariant state without holding
-	 * any locks, that is, before these two lock_map_acquire()'s.
-	 *
-	 * However, that would result in:
-	 *
-	 *   A(W1)
-	 *   WFC(C)
-	 *		A(W1)
-	 *		C(C)
-	 *
-	 * Which would create W1->C->W1 dependencies, even though there is no
-	 * actual deadlock possible. There are two solutions, using a
-	 * read-recursive acquire on the work(queue) 'locks', but this will then
-	 * hit the lockdep limitation on recursive locks, or simply discard
-	 * these locks.
-	 *
-	 * AFAICT there is no possible deadlock scenario between the
-	 * flush_work() and complete() primitives (except for single-threaded
-	 * workqueues), so hiding them isn't a problem.
-	 */
-	lockdep_invariant_state(true);
-//	trace_workqueue_execute_start(work);
+	trace_workqueue_execute_start(work);
 	worker->current_func(work);
 	/*
 	 * While we must be careful to not use "work" after this, the trace
 	 * point will only record its address.
 	 */
-//	trace_workqueue_execute_end(work);
+	trace_workqueue_execute_end(work);
 	lock_map_release(&lockdep_map);
 	lock_map_release(&pwq->wq->lockdep_map);
 
