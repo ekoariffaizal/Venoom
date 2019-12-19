@@ -1161,23 +1161,6 @@ static void unaffine_one_perf_thread(struct task_struct *t)
 	set_cpus_allowed_ptr(t, cpu_all_mask);
 }
 
-static void affine_one_perf_irq(struct irq_desc *desc)
-{
-	int cpu;
-
-	/* Balance the performance-critical IRQs across all perf CPUs */
-	while (1) {
-		cpu = cpumask_next_and(perf_cpu_index, cpu_perf_mask,
-				       cpu_online_mask);
-		if (cpu < nr_cpu_ids)
-			break;
-		perf_cpu_index = -1;
-	}
-	irq_set_affinity_locked(&desc->irq_data, cpumask_of(cpu), true);
-
-	perf_cpu_index = cpu;
-}
-
 void unaffine_perf_irqs(void)
 {
 	struct irq_desc_list *data;

@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -298,15 +299,9 @@ static void msm_restart_prepare(const char *cmd)
 				(cmd != NULL && cmd[0] != '\0'));
 	}
 
-	/* To preserve console-ramoops */
+#ifdef CONFIG_QCOM_PRESERVE_MEM
 	need_warm_reset = true;
-
-	/* Perform a regular reboot upon panic or unspecified command */
-	if (in_panic || !cmd) {
-		__raw_writel(0x77665501, restart_reason);
-		cmd = NULL;
-		in_panic = false;
-	}
+#endif
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (need_warm_reset) {
@@ -315,7 +310,10 @@ static void msm_restart_prepare(const char *cmd)
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
 	}
 
-	if (cmd != NULL) {
+	if (in_panic) {
+		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
+		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
+	} else if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
@@ -365,21 +363,17 @@ static void msm_restart_prepare(const char *cmd)
 					     restart_reason);
 			}
 		} else if (!strncmp(cmd, "edl", 3)) {
-			enable_emergency_dload_mode();
+			if (0)
+				enable_emergency_dload_mode();
+			else
+				pr_notice("This command already been disabled\n");
 		} else {
-#ifdef CONFIG_MACH_LONGCHEER
 			qpnp_pon_set_restart_reason(PON_RESTART_REASON_NORMAL);
-#endif
 			__raw_writel(0x77665501, restart_reason);
 		}
-#ifdef CONFIG_MACH_LONGCHEER
-	} else if (in_panic) {
-		qpnp_pon_set_restart_reason(PON_RESTART_REASON_PANIC);
-		qpnp_pon_system_pwr_off(PON_POWER_OFF_WARM_RESET);
 	} else {
 		qpnp_pon_set_restart_reason(PON_RESTART_REASON_NORMAL);
 		__raw_writel(0x77665501, restart_reason);
-#endif
 	}
 
 	flush_cache_all();
