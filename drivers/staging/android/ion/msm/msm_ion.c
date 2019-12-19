@@ -305,8 +305,10 @@ static int ion_pages_cache_ops(struct ion_client *client,
 	int i;
 	unsigned int len = 0;
 	void (*op)(const void *, const void *);
+	struct ion_buffer *buffer;
 
-	table = ion_sg_table(client, handle);
+	buffer = get_buffer(handle);
+	table = buffer->sg_table;
 	if (IS_ERR_OR_NULL(table))
 		return PTR_ERR(table);
 
@@ -374,7 +376,7 @@ int ion_do_cache_op(struct ion_client *client, struct ion_handle *handle,
 	if (get_secure_vmid(flags) > 0)
 		return 0;
 
-	table = ion_sg_table(client, handle);
+	table = buffer->sg_table;
 
 	if (IS_ERR_OR_NULL(table))
 		return PTR_ERR(table);
