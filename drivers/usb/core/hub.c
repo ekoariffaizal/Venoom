@@ -36,8 +36,6 @@
 #define USB_VENDOR_GENESYS_LOGIC		0x05e3
 #define HUB_QUIRK_CHECK_PORT_AUTOSUSPEND	0x01
 
-						
-
 /* Protect struct usb_device->state and ->children members
  * Note: Both are also protected by ->dev.sem, except that ->state can
  * change to USB_STATE_NOTATTACHED even when the semaphore isn't held. */
@@ -109,8 +107,6 @@ EXPORT_SYMBOL_GPL(ehci_cf_port_reset_rwsem);
 static void hub_release(struct kref *kref);
 static int usb_reset_and_verify_device(struct usb_device *udev);
 static int hub_port_disable(struct usb_hub *hub, int port1, int set_state);
-static bool hub_port_warm_reset_required(struct usb_hub *hub, int port1,
-		u16 portstatus);
 
 static inline char *portspeed(struct usb_hub *hub, int portstatus)
 {
@@ -1106,11 +1102,6 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 				usb_clear_port_feature(hdev, port1,
 						   USB_PORT_FEAT_ENABLE);
 		}
-
-		/* Make sure a warm-reset request is handled by port_event */
-		if (type == HUB_RESUME &&
-		    hub_port_warm_reset_required(hub, port1, portstatus))
-			set_bit(port1, hub->event_bits);
 
 		/*
 		 * Add debounce if USB3 link is in polling/link training state.
@@ -4282,7 +4273,7 @@ static int hub_set_address(struct usb_device *udev, int devnum)
  * device says it supports the new USB 2.0 Link PM errata by setting the BESL
  * support bit in the BOS descriptor.
  */
-static void hub_set_initial_usb2_lpm_policy(struct usb_device *udev)
+/*static void hub_set_initial_usb2_lpm_policy(struct usb_device *udev)
 {
 	struct usb_hub *hub = usb_hub_to_struct_hub(udev->parent);
 	int connect_type = USB_PORT_CONNECT_TYPE_UNKNOWN;
@@ -4298,7 +4289,7 @@ static void hub_set_initial_usb2_lpm_policy(struct usb_device *udev)
 		udev->usb2_hw_lpm_allowed = 1;
 		usb_enable_usb2_hardware_lpm(udev);
 	}
-}
+}*/
 
 static int hub_enable_device(struct usb_device *udev)
 {
@@ -4638,7 +4629,7 @@ hub_port_init(struct usb_hub *hub, struct usb_device *udev, int port1,
 	/* notify HCD that we have a device connected and addressed */
 	if (hcd->driver->update_device)
 		hcd->driver->update_device(hcd, udev);
-	hub_set_initial_usb2_lpm_policy(udev);
+
 fail:
 	if (retval) {
 		hub_port_disable(hub, port1, 0);
@@ -4783,12 +4774,6 @@ static void hub_port_connect(struct usb_hub *hub, int port1, u16 portstatus,
 			goto done;
 		return;
 	}
-
-					
-																			 
-			
-  
-
 	if (hub_is_superspeed(hub->hdev))
 		unit_load = 150;
 	else
