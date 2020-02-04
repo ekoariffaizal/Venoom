@@ -372,11 +372,10 @@ static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
 {
 	/* root ? */
 	if (mem_cgroup_disabled() || !memcg->css.parent) {
-		if (low_batt_swap_stall || !triggerswapping) {
-			vm_swappiness = low_batt_swappiness;
-		} else {
+		if (triggerswapping)
 			vm_swappiness = agni_swappiness;
-		}
+		else
+			vm_swappiness = low_batt_swappiness;
 
 		return vm_swappiness;
 	}
@@ -387,11 +386,11 @@ static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
 #else
 static inline int mem_cgroup_swappiness(struct mem_cgroup *mem)
 {
-	if (low_batt_swap_stall || !triggerswapping) {
-		vm_swappiness = low_batt_swappiness;
-	} else {
+	if (triggerswapping)
 		vm_swappiness = agni_swappiness;
-	}
+	else
+		vm_swappiness = low_batt_swappiness;
+
 	return vm_swappiness;
 }
 #endif
