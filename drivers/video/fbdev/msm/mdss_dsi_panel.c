@@ -31,6 +31,9 @@
 #include "mdss_livedisplay.h"
 #endif							   
 
+#include <linux/agni_meminfo.h>
+
+
 #define DT_CMD_HDR 6
 #define DEFAULT_MDP_TRANSFER_TIME 14000
 
@@ -1250,6 +1253,11 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 		mdss_dba_utils_video_off(pinfo->dba_data);
 		mdss_dba_utils_hdcp_enable(pinfo->dba_data, false);
 	}
+	
+	display_on = false;
+
+	agni_memprobe();
+
 end:
 	pr_err("%s:-\n", __func__);
 	return 0;
