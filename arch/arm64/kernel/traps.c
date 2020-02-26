@@ -561,7 +561,6 @@ asmlinkage void bad_mode(struct pt_regs *regs, int reason, unsigned int esr)
 
 	pr_crit("Bad mode in %s handler detected, code 0x%08x -- %s\n",
 		handler[reason], esr, esr_get_class_string(esr));
-
 	if (esr >> ESR_ELx_EC_SHIFT == ESR_ELx_EC_SERROR) {
 		pr_crit("System error detected. ESR.ISS = %08x\n",
 			esr & 0xffffff);
