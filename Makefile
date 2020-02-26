@@ -1,6 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 4
-SUBLEVEL = 199
+SUBLEVEL = 200
 EXTRAVERSION =
 NAME = Blurry Fish Butt
 
@@ -927,7 +927,6 @@ KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
 ifdef CONFIG_RETPOLINE
 KBUILD_CFLAGS += $(call cc-option,-fcf-protection=none)
 endif
-
 
 # use the deterministic mode of AR if available
 KBUILD_ARFLAGS := $(call ar-option,D)

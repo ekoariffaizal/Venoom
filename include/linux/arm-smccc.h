@@ -13,9 +13,9 @@
  */
 #ifndef __LINUX_ARM_SMCCC_H
 #define __LINUX_ARM_SMCCC_H
-
 #include <linux/linkage.h>
 #include <linux/types.h>
+
 
 /*
  * This file provides common defines for ARM SMC Calling Convention as
@@ -101,7 +101,6 @@ asmlinkage void arm_smccc_hvc(unsigned long a0, unsigned long a1,
 			unsigned long a5, unsigned long a6, unsigned long a7,
 			struct arm_smccc_res *res);
 
-
 static inline unsigned long __invoke_psci_fn_hvc(unsigned long function_id,
 			unsigned long arg0, unsigned long arg1,
 			unsigned long arg2)
@@ -121,5 +120,4 @@ static inline unsigned long __invoke_psci_fn_smc(unsigned long function_id,
 	arm_smccc_smc(function_id, arg0, arg1, arg2, 0, 0, 0, 0, &res);
 	return res.a0;
 }
-
 #endif /*__LINUX_ARM_SMCCC_H*/

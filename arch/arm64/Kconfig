@@ -104,8 +104,11 @@ config ARM64
 	select SYSCTL_EXCEPTION_TRACE
 	select HAVE_CONTEXT_TRACKING
 	select HAVE_ARM_SMCCC
+<<<<<<< HEAD
 	select ARCH_HAS_PTE_SPECIAL
 	select ARCH_SUPPORTS_SPECULATIVE_PAGE_FAULT
+=======
+>>>>>>> v4.4.200
 	help
 	  ARM 64-bit (AArch64) Linux support.
 
