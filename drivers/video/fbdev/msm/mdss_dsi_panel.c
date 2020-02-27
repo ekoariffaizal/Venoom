@@ -22,6 +22,7 @@
 #include <linux/leds.h>
 #include <linux/qpnp/pwm.h>
 #include <linux/err.h>
+#include <linux/display_state.h>
 #include <linux/string.h>
 
 #include "mdss_dsi.h"
@@ -61,6 +62,12 @@ extern bool synaptics_gesture_func_on;
 bool ESD_TE_status = false;
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+bool display_on = true;
+
+bool is_display_on()
+{
+	return display_on;
+}
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	if (ctrl->pwm_pmi)
