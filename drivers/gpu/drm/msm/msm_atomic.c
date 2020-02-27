@@ -30,6 +30,60 @@ struct msm_commit {
 	struct kthread_work commit_work;
 };
 
+static BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);
+
+/**
+ * msm_drm_register_client - register a client notifier
+ * @nb: notifier block to callback on events
+ *
+ * This function registers a notifier callback function
+ * to msm_drm_notifier_list, which would be called when
+ * received unblank/power down event.
+ */
+int msm_drm_register_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&msm_drm_notifier_list,
+						nb);
+}
+EXPORT_SYMBOL(msm_drm_register_client);
+
+/**
+ * msm_drm_unregister_client - unregister a client notifier
+ * @nb: notifier block to callback on events
+ *
+ * This function unregisters the callback function from
+ * msm_drm_notifier_list.
+ */
+int msm_drm_unregister_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&msm_drm_notifier_list,
+						  nb);
+}
+EXPORT_SYMBOL(msm_drm_unregister_client);
+
+/**
+ * msm_drm_notifier_call_chain - notify clients of drm_events
+ * @val: event MSM_DRM_EARLY_EVENT_BLANK or MSM_DRM_EVENT_BLANK
+ * @v: notifier data, inculde display id and display blank
+ *     event(unblank or power down).
+ */
+static bool notifier_enabled __read_mostly = true;
+static int msm_drm_notifier_call_chain(unsigned long val, void *v)
+{
+	if (unlikely(!notifier_enabled))
+		return 0;
+
+	return blocking_notifier_call_chain(&msm_drm_notifier_list, val,
+					    v);
+}
+
+void msm_drm_notifier_enable(bool val)
+{
+	notifier_enabled = val;
+	mb();
+}
+EXPORT_SYMBOL(msm_drm_notifier_enable);
+
 /* block until specified crtcs are no longer pending update, and
  * atomically mark them as pending update
  */

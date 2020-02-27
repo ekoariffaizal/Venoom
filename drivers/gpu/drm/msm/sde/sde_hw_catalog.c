@@ -1047,6 +1047,7 @@ static int sde_sspp_parse_dt(struct device_node *np,
 			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
 				PROP_BITVALUE_ACCESS(prop_value,
 						SSPP_CLK_CTRL, i, 1);
+			sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].val = -1;
 		}
 
 		SDE_DEBUG(
@@ -1436,6 +1437,7 @@ static int sde_wb_parse_dt(struct device_node *np,
 			sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].bit_off =
 				PROP_BITVALUE_ACCESS(prop_value,
 						WB_CLK_CTRL, i, 1);
+			sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].val = -1;
 		}
 
 		SDE_DEBUG(
@@ -1555,6 +1557,205 @@ static void _sde_dspp_setup_blocks(struct sde_mdss_cfg *sde_cfg,
 		sblk->sixzone.len = 0;
 		set_bit(SDE_DSPP_VLUT, &dspp->features);
 	}
+}
+
+static void _sde_inline_rot_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg, struct sde_rot_cfg *rot)
+{
+	int rc, prop_count[INLINE_ROT_PROP_MAX], i, j, index;
+	struct sde_prop_value *prop_value = NULL;
+	bool prop_exists[INLINE_ROT_PROP_MAX];
+	u32 off_count, sspp_count = 0, wb_count = 0;
+	const char *type;
+
+	prop_value = kzalloc(INLINE_ROT_PROP_MAX *
+			sizeof(struct sde_prop_value), GFP_KERNEL);
+	if (!prop_value)
+		return;
+
+	rc = _validate_dt_entry(np, inline_rot_prop,
+			ARRAY_SIZE(inline_rot_prop), prop_count, &off_count);
+	if (rc)
+		goto end;
+
+	rc = _read_dt_entry(np, inline_rot_prop, ARRAY_SIZE(inline_rot_prop),
+			prop_count, prop_exists, prop_value);
+	if (rc)
+		goto end;
+
+	for (i = 0; i < off_count; i++) {
+		rot->vbif_cfg[i].xin_id = PROP_VALUE_ACCESS(prop_value,
+							INLINE_ROT_XIN, i);
+		of_property_read_string_index(np,
+				inline_rot_prop[INLINE_ROT_XIN_TYPE].prop_name,
+				i, &type);
+
+		if (!strcmp(type, "sspp")) {
+			rot->vbif_cfg[i].num = INLINE_ROT0_SSPP + sspp_count;
+			rot->vbif_cfg[i].is_read = true;
+			rot->vbif_cfg[i].clk_ctrl =
+					SDE_CLK_CTRL_INLINE_ROT0_SSPP
+					+ sspp_count;
+			sspp_count++;
+		} else if (!strcmp(type, "wb")) {
+			rot->vbif_cfg[i].num = INLINE_ROT0_WB + wb_count;
+			rot->vbif_cfg[i].is_read = false;
+			rot->vbif_cfg[i].clk_ctrl =
+					SDE_CLK_CTRL_INLINE_ROT0_WB
+					+ wb_count;
+			wb_count++;
+		} else {
+			SDE_ERROR("invalid rotator vbif type:%s\n", type);
+			goto end;
+		}
+
+		index = rot->vbif_cfg[i].clk_ctrl;
+		if (index < 0 || index >= SDE_CLK_CTRL_MAX) {
+			SDE_ERROR("invalid clk_ctrl enum:%d\n", index);
+			goto end;
+		}
+
+		for (j = 0; j < sde_cfg->mdp_count; j++) {
+			sde_cfg->mdp[j].clk_ctrls[index].reg_off =
+				PROP_BITVALUE_ACCESS(prop_value,
+						INLINE_ROT_CLK_CTRL, i, 0);
+			sde_cfg->mdp[j].clk_ctrls[index].bit_off =
+				PROP_BITVALUE_ACCESS(prop_value,
+						INLINE_ROT_CLK_CTRL, i, 1);
+			sde_cfg->mdp[j].clk_ctrls[index].val = -1;
+		}
+
+		SDE_DEBUG("rot- xin:%d, num:%d, rd:%d, clk:%d:0x%x/%d\n",
+				rot->vbif_cfg[i].xin_id,
+				rot->vbif_cfg[i].num,
+				rot->vbif_cfg[i].is_read,
+				rot->vbif_cfg[i].clk_ctrl,
+				sde_cfg->mdp[0].clk_ctrls[index].reg_off,
+				sde_cfg->mdp[0].clk_ctrls[index].bit_off);
+	}
+
+	rot->vbif_idx = VBIF_RT;
+	rot->xin_count = off_count;
+
+end:
+	kfree(prop_value);
+}
+
+static int sde_rot_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	struct sde_rot_cfg *rot;
+	struct platform_device *pdev;
+	struct of_phandle_args phargs;
+	struct llcc_slice_desc *slice;
+	int rc = 0, i;
+
+	if (!sde_cfg) {
+		SDE_ERROR("invalid argument\n");
+		rc = -EINVAL;
+		goto end;
+	}
+
+	for (i = 0; i < ROT_MAX; i++) {
+		rot = sde_cfg->rot + sde_cfg->rot_count;
+		rot->base = 0;
+		rot->len = 0;
+
+		rc = of_parse_phandle_with_args(np,
+				"qcom,sde-inline-rotator", "#list-cells",
+				i, &phargs);
+		if (rc) {
+			rc = 0;
+			break;
+		} else if (!phargs.np || !phargs.args_count) {
+			rc = -EINVAL;
+			break;
+		}
+
+		rot->id = ROT_0 + phargs.args[0];
+
+		pdev = of_find_device_by_node(phargs.np);
+		if (pdev) {
+			slice = llcc_slice_getd(&pdev->dev, "rotator");
+			if (IS_ERR_OR_NULL(slice)) {
+				rot->pdev = NULL;
+				SDE_ERROR("failed to get system cache %ld\n",
+						PTR_ERR(slice));
+			} else {
+				rot->scid = llcc_get_slice_id(slice);
+				rot->slice_size = llcc_get_slice_size(slice);
+				rot->pdev = pdev;
+				llcc_slice_putd(slice);
+				SDE_DEBUG("rot:%d scid:%d slice_size:%zukb\n",
+						rot->id, rot->scid,
+						rot->slice_size);
+				_sde_inline_rot_parse_dt(np, sde_cfg, rot);
+				sde_cfg->rot_count++;
+			}
+		} else {
+			rot->pdev = NULL;
+			SDE_ERROR("invalid sde rotator node\n");
+		}
+
+		of_node_put(phargs.np);
+	}
+
+	if (sde_cfg->rot_count) {
+		sde_cfg->has_sbuf = true;
+		sde_cfg->sbuf_headroom = DEFAULT_SBUF_HEADROOM;
+		sde_cfg->sbuf_prefill = DEFAULT_SBUF_PREFILL;
+	}
+
+end:
+	return rc;
+}
+
+static int sde_dspp_top_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int rc, prop_count[DSPP_TOP_PROP_MAX];
+	bool prop_exists[DSPP_TOP_PROP_MAX];
+	struct sde_prop_value *prop_value = NULL;
+	u32 off_count;
+
+	if (!sde_cfg) {
+		SDE_ERROR("invalid argument\n");
+		rc = -EINVAL;
+		goto end;
+	}
+
+	prop_value = kzalloc(DSPP_TOP_PROP_MAX *
+			sizeof(struct sde_prop_value), GFP_KERNEL);
+	if (!prop_value) {
+		rc = -ENOMEM;
+		goto end;
+	}
+
+	rc = _validate_dt_entry(np, dspp_top_prop, ARRAY_SIZE(dspp_top_prop),
+		prop_count, &off_count);
+	if (rc)
+		goto end;
+
+	rc = _read_dt_entry(np, dspp_top_prop, ARRAY_SIZE(dspp_top_prop),
+		prop_count, prop_exists, prop_value);
+	if (rc)
+		goto end;
+
+	if (off_count != 1) {
+		SDE_ERROR("invalid dspp_top off_count:%d\n", off_count);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	sde_cfg->dspp_top.base =
+		PROP_VALUE_ACCESS(prop_value, DSPP_TOP_OFF, 0);
+	sde_cfg->dspp_top.len =
+		PROP_VALUE_ACCESS(prop_value, DSPP_TOP_SIZE, 0);
+	snprintf(sde_cfg->dspp_top.name, SDE_HW_BLK_NAME_LEN, "dspp_top");
+
+end:
+	kfree(prop_value);
+	return rc;
 }
 
 static int sde_dspp_parse_dt(struct device_node *np,
