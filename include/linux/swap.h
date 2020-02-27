@@ -319,13 +319,8 @@ extern void swap_setup(void);
 
 extern void add_page_to_unevictable_list(struct page *page);
 
-extern void __lru_cache_add_active_or_unevictable(struct page *page,
-						unsigned long vma_flags);
-static inline void lru_cache_add_active_or_unevictable(struct page *page,
-						struct vm_area_struct *vma)
-{
-	return __lru_cache_add_active_or_unevictable(page, vma->vm_flags);
-}
+extern void lru_cache_add_active_or_unevictable(struct page *page,
+						struct vm_area_struct *vma);
 
 /* linux/mm/vmscan.c */
 extern unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
@@ -368,15 +363,11 @@ extern void kswapd_stop(int nid);
 static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
 {
 	/* root ? */
-
-	if (mem_cgroup_disabled() || !memcg->css.parent) {
-		if (low_batt_swap_stall || !triggerswapping) {
-			vm_swappiness = low_batt_swappiness;
-		} else {
-			vm_swappiness = agni_swappiness;
-		}
+	if (mem_cgroup_disabled() || !memcg->css.parent)
+		vm_swappiness = agni_swappiness;
 
 		return vm_swappiness;
+	}
 
 	return memcg->swappiness;
 }
@@ -384,11 +375,8 @@ static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
 #else
 static inline int mem_cgroup_swappiness(struct mem_cgroup *mem)
 {
-	if (low_batt_swap_stall || !triggerswapping) {
-		vm_swappiness = low_batt_swappiness;
-	} else {
-		vm_swappiness = agni_swappiness;
-	}
+	vm_swappiness = agni_swappiness;
+
 	return vm_swappiness;
 }
 #endif

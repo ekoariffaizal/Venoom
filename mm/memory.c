@@ -2361,8 +2361,8 @@ static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
 			inc_mm_counter_fast(mm, MM_ANONPAGES);
 		}
 		flush_cache_page(vma, address, pte_pfn(orig_pte));
-		entry = mk_pte(new_page, vmf2->vma_page_prot);
-		entry = maybe_mkwrite(pte_mkdirty(entry), vmf2->vma_flags);
+		entry = mk_pte(new_page, vma->vm_page_prot);
+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
 		/*
 		 * Clear the pte entry and flush it first, before updating the
 		 * pte with the new entry. This will avoid a race condition
@@ -2372,7 +2372,7 @@ static int wp_page_copy(struct mm_struct *mm, struct vm_area_struct *vma,
 		ptep_clear_flush_notify(vma, address, page_table);
 		__page_add_new_anon_rmap(new_page, vma, address);
 		mem_cgroup_commit_charge(new_page, memcg, false);
-		__lru_cache_add_active_or_unevictable(new_page, vmf2->vma_flags);
+		lru_cache_add_active_or_unevictable(new_page, vma);
 		/*
 		 * We call the notify macro here because, when using secondary
 		 * mmu page tables (such as kvm shadow page tables), we want the
@@ -2848,9 +2848,9 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 
 	inc_mm_counter_fast(mm, MM_ANONPAGES);
 	dec_mm_counter_fast(mm, MM_SWAPENTS);
-	pte = mk_pte(page, vmf2->vma_page_prot);
+	pte = mk_pte(page, vma->vm_page_prot);
 	if ((flags & FAULT_FLAG_WRITE) && reuse_swap_page(page)) {
-		pte = maybe_mkwrite(pte_mkdirty(pte), vmf2->vma_flags);
+		pte = maybe_mkwrite(pte_mkdirty(pte), vma);
 		flags &= ~FAULT_FLAG_WRITE;
 		ret |= VM_FAULT_WRITE;
 		exclusive = 1;
@@ -2865,7 +2865,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	} else { /* ksm created a completely new copy */
 		__page_add_new_anon_rmap(page, vma, address);
 		mem_cgroup_commit_charge(page, memcg, false);
-		__lru_cache_add_active_or_unevictable(page, vmf2->vma_flags);
+		lru_cache_add_active_or_unevictable(page, vma);
 	}
 
 	swap_free(entry);
@@ -3007,7 +3007,7 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	inc_mm_counter_fast(mm, MM_ANONPAGES);
 	__page_add_new_anon_rmap(page, vma, address);
 	mem_cgroup_commit_charge(page, memcg, false);
-	__lru_cache_add_active_or_unevictable(page, vmf2->vma_flags);
+	lru_cache_add_active_or_unevictable(page, vma);
 setpte:
 	set_pte_at(mm, address, page_table, entry);
 
@@ -3311,7 +3311,7 @@ static int do_cow_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	}
 	do_set_pte(vma, address, new_page, pte, true, true, vmf2);
 	mem_cgroup_commit_charge(new_page, memcg, false);
-	__lru_cache_add_active_or_unevictable(new_page, vmf2->vma_flags);
+	lru_cache_add_active_or_unevictable(new_page, vma);
 	pte_unmap_unlock(pte, ptl);
 	if (fault_page) {
 		unlock_page(fault_page);
