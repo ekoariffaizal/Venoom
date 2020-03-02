@@ -112,8 +112,11 @@ obj-$(CONFIG_MSM_HAB) += hab/
 obj-$(CONFIG_QCOM_QDSS_BRIDGE) += qdss_bridge.o
 obj-y += serial_num.o
 obj-$(CONFIG_STATE_NOTIFIER) += state_notifier.o
+obj-$(CONFIG_MFSE_QMI) += mfse_qmi_v01.o mfse_qmi.o
 
 # TODO: remove me b/62058353
 subdir-ccflags-y += \
 	-Wno-ignored-attributes \
 	-Wno-gcc-compat
+
+
