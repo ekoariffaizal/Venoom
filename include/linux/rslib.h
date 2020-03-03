@@ -54,17 +54,6 @@ struct rs_control {
 	struct list_head list;
 };
 
-/**
- * struct rs_control - rs control structure per instance
- * @codec:	The codec used for this instance
- * @buffers:	Internal scratch buffers used in calls to decode_rs()
- */
-struct rs_control {
-	struct rs_codec	*codec;
-	uint16_t	buffers[0];
-};
-
-
 /* General purpose RS codec, 8-bit data width, symbol width 1-15 bit  */
 #ifdef CONFIG_REED_SOLOMON_ENC8
 int encode_rs8(struct rs_control *rs, uint8_t *data, int len, uint16_t *par,
