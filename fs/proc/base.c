@@ -88,6 +88,9 @@
 #include <linux/flex_array.h>
 #include <linux/posix-timers.h>
 #include <linux/cpufreq_times.h>
+#include <linux/binfmts.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 #ifdef CONFIG_HARDWALL
 #include <asm/hardwall.h>
 #endif
@@ -1259,10 +1262,18 @@ err_task_lock:
 	task_unlock(task);
 	put_task_struct(task);
 out:
+	
+	if (!ret && !threadgroup &&
+		!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
+		is_zygote_pid(tsk->parent->pid)) {
+		cpu_input_boost_kick_max(500);
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 500);
+	}
+	
 	/* These apps burn through CPU in the background. Don't let them. */
 	if (!err && oom_score_adj >= 700) {
 		if (!strcmp(task_comm, "id.GoogleCamera") ||
-//		    !strcmp(task_comm, "ndroid.settings") ||
+			//!strcmp(task_comm, "ndroid.settings") ||
 		    !strcmp(task_comm, "com.android.camera") ||
             !strcmp(task->comm, "eaurora.snapcam")) {
 			struct task_kill_info *kinfo;
