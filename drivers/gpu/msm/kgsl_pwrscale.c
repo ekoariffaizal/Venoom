@@ -69,10 +69,14 @@ static struct devfreq_dev_status last_status = { .private_data = &last_xstats };
  */
 void kgsl_pwrscale_sleep(struct kgsl_device *device)
 {
+	struct kgsl_pwrscale *psc = &device->pwrscale;
 	BUG_ON(!mutex_is_locked(&device->mutex));
 	if (!device->pwrscale.enabled)
 		return;
 	device->pwrscale.on_time = 0;
+
+	psc->popp_level = 0;
+	clear_bit(POPP_PUSH, &device->pwrscale.popp_state);
 
 	/* to call devfreq_suspend_device() from a kernel thread */
 	queue_work(device->pwrscale.devfreq_wq,
@@ -146,6 +150,17 @@ void kgsl_pwrscale_update_stats(struct kgsl_device *device)
 	if (device->state == KGSL_STATE_ACTIVE) {
 		struct kgsl_power_stats stats;
 		device->ftbl->power_stats(device, &stats);
+		if (psc->popp_level) {
+			u64 x = stats.busy_time;
+			u64 y = stats.ram_time;
+			do_div(x, 100);
+			do_div(y, 100);
+			x *= popp_param[psc->popp_level].gpu_x;
+			y *= popp_param[psc->popp_level].ddr_y;
+			trace_kgsl_popp_mod(device, x, y);
+			stats.busy_time += x;
+			stats.ram_time += y;
+		}
 		device->pwrscale.accum_stats.busy_time += stats.busy_time;
 		device->pwrscale.accum_stats.ram_time += stats.ram_time;
 		device->pwrscale.accum_stats.ram_wait += stats.ram_wait;
@@ -274,7 +289,7 @@ void kgsl_pwrscale_enable(struct kgsl_device *device)
 		 * run at default level;
 		 */
 		kgsl_pwrctrl_pwrlevel_change(device,
-					device->pwrctrl.num_pwrlevels - 1);
+					device->pwrctrl.default_pwrlevel);
 		device->pwrscale.enabled = false;
 	}
 }
@@ -546,11 +561,13 @@ int kgsl_devfreq_target(struct device *dev, unsigned long *freq, u32 flags)
 				if (pwr->thermal_cycle == CYCLE_ACTIVE)
 					level = _thermal_adjust(pwr, i);
 				else
-					level = i;
+					level = popp_trans2(device, i);
 				break;
 			}
 		if (level != pwr->active_pwrlevel)
 			kgsl_pwrctrl_pwrlevel_change(device, level);
+	} else if (popp_stable(device)) {
+		popp_trans1(device);
 	}
 
 	*freq = kgsl_pwrctrl_active_freq(pwr);
@@ -857,7 +874,7 @@ int kgsl_pwrscale_init(struct device *dev, const char *governor)
 	srcu_init_notifier_head(&pwrscale->nh);
 
 	profile->initial_freq =
-		pwr->pwrlevels[pwr->num_pwrlevels - 1].gpu_freq;
+		pwr->pwrlevels[pwr->default_pwrlevel].gpu_freq;
 	/* Let's start with 10 ms and tune in later */
 	profile->polling_ms = 10;
 

@@ -644,25 +644,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct delayed_work err_int_work;
 	bool rdy_err_detect;
 	bool err_detect_irq_en;
-
-	/* alpm brightness setting */
-	struct dsi_panel_cmds alpm_mode_cmds[ALPM_MODE_MAX];
-	enum alpm_mode_type alpm_mode;
-	u32 alpm_bl_threshold;
-	u32 alpm_dim_threshold;
-
-	/* rgb calibration */
-	struct dsi_cmd_pos rgb_gain_pos;
-	struct rgb_gain rgb_gain;
-};
-
-struct te_data {
-	bool irq_enabled;
-	bool err_fg;
-	int irq;
-	unsigned long ts_vsync;
-	unsigned long ts_last_check;
-	spinlock_t spinlock;
 };
 
 struct dsi_status_data {
