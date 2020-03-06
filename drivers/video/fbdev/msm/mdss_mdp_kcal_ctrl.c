@@ -84,6 +84,10 @@ int mode_kcal_min, mode_kcal_sat, mode_kcal_val, mode_kcal_cont;
 struct kcal_lut_data *lut_cpy;
 #endif
 
+#ifdef CONFIG_KLAPSE
+struct kcal_lut_data *lut_cpy;
+#endif
+
 struct mdss_mdp_ctl *fb0_ctl = 0;
 
 static void kcal_mode_save_prev(struct device *dev) {
