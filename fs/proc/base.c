@@ -1262,7 +1262,14 @@ err_task_lock:
 	task_unlock(task);
 	put_task_struct(task);
 out:
-		
+	
+	if (!ret && !threadgroup &&
+		!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
+		is_zygote_pid(tsk->parent->pid)) {
+		cpu_input_boost_kick_max(500);
+		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 500);
+	}
+	
 	/* These apps burn through CPU in the background. Don't let them. */
 	if (!err && oom_score_adj >= 700) {
 		if (!strcmp(task_comm, "id.GoogleCamera") ||
