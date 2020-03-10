@@ -149,6 +149,7 @@ struct generic_get_data_ {
 };
 static struct generic_get_data_ *generic_get_data;
 
+#ifdef CONFIG_DEBUG_FS
 #define OUT_BUFFER_SIZE 56
 #define IN_BUFFER_SIZE 24
 
