@@ -190,7 +190,7 @@ static int __maybe_unused enable_qcom_bp_hardening(void *data)
 	return 0;
 }
 
-static void qcom_link_stack_sanitization(void)
+static void __maybe_unused qcom_link_stack_sanitization(void)
 {
 	u64 tmp;
 
@@ -202,22 +202,6 @@ static void qcom_link_stack_sanitization(void)
 		     : "=&r" (tmp));
 }
 
-static void qcom_bp_hardening(void)
-{
-	qcom_link_stack_sanitization();
-	if (psci_ops.get_version)
-		psci_ops.get_version();
-}
-
-static void enable_qcom_bp_hardening(void *data)
-{
-	const struct arm64_cpu_capabilities *entry = data;
-
-	install_bp_hardening_cb(entry,
-				(bp_hardening_cb_t)qcom_bp_hardening,
-				 __psci_hyp_bp_inval_start,
-				 __psci_hyp_bp_inval_end);
-}
 #endif	/* CONFIG_HARDEN_BRANCH_PREDICTOR */
 
 #define MIDR_RANGE(model, min, max) \
