@@ -1245,7 +1245,7 @@ char sensor_fusion_id[512] = {0};
 static char sensor_fusion_id[512] = {0};
 #endif
 
-void msm_sensor_set_sesnor_id(struct msm_sensor_ctrl_t *s_ctrl)
+void msm_sensor_set_sensor_id(struct msm_sensor_ctrl_t *s_ctrl)
 {
 	char  sensor_fusion_id_tmp[90] = {0};
 	int rc = 0;
@@ -1450,10 +1450,8 @@ int32_t msm_sensor_driver_probe(void *setting,
 		slave_info->i2c_freq_mode = slave_info32->i2c_freq_mode;
 		slave_info->sensor_id_info = slave_info32->sensor_id_info;
 		slave_info->vendor_id_info = slave_info32->vendor_id_info;
-		slave_info->vcm_id_info = slave_info32->vcm_id_info;
-#ifdef CONFIG_VENOOM_MIUI_11_CAMERA_MODE
-		slave_info->lens_id_info = slave_info32->lens_id_info;
-#endif
+		slave_info->vcm_id_info = slave_info32->vcm_id_info;										
+		slave_info->lens_id_info = slave_info32->lens_id_info;  
 
 		slave_info->slave_addr = slave_info32->slave_addr;
 		slave_info->power_setting_array.size =
@@ -1762,10 +1760,7 @@ CSID_TG:
 	s_ctrl->sensordata->flash_name = slave_info->flash_name;
 	s_ctrl->sensordata->vendor_id_info = &(slave_info->vendor_id_info);
 	s_ctrl->sensordata->vcm_id_info = &(slave_info->vcm_id_info);
-#ifdef CONFIG_VENOOM_MIUI_11_CAMERA_MODE
-	s_ctrl->sensordata->lens_id_info =&(slave_info->lens_id_info);
-#endif
-	
+	s_ctrl->sensordata->lens_id_info = &(slave_info->lens_id_info);
 
 	/*
 	 * Update eeporm subdevice Id by input eeprom name
@@ -1857,7 +1852,7 @@ CSID_TG:
 	msm_sensor_init_device_name();
 	msm_sensor_set_module_info(s_ctrl);
 	msm_sensorid_init_device_name();
-	msm_sensor_set_sesnor_id(s_ctrl);
+	msm_sensor_set_sensor_id(s_ctrl);
 
 	/* Power down */
 	s_ctrl->func_tbl->sensor_power_down(s_ctrl);

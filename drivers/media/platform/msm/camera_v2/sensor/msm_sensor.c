@@ -153,7 +153,6 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 	struct msm_camera_slave_info *slave_info;
 	const char *sensor_name;
 	uint32_t retry = 0;
-	uint32_t check_id_retry = 0;
 
 	if (!s_ctrl) {
 		pr_err("%s:%d failed: %pK\n",
@@ -217,12 +216,7 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 			}
 		}
 		
-		for(check_id_retry = 0; check_id_retry < 3; check_id_retry++) {
-			rc = msm_sensor_check_id(s_ctrl);
-			if (!rc) break;
-			msleep(20);
-		}
-
+		rc = msm_sensor_check_id(s_ctrl);
 		if (rc < 0) {
 			msm_camera_power_down(power_info,
 				s_ctrl->sensor_device_type, sensor_i2c_client);
@@ -304,8 +298,7 @@ int msm_sensor_match_vendor_id(struct msm_sensor_ctrl_t *s_ctrl)
 		s_ctrl->sensordata->vcm_id_info->data_type);
 		have_vcmid = 1;
 	}
-	
-	#ifdef CONFIG_VENOOM_MIUI_11_CAMERA_MODE
+
     if (s_ctrl->sensordata->lens_id_info->lens_id_addr != 0)
 	{
 	    msm_camera_cci_i2c_read(
@@ -315,8 +308,7 @@ int msm_sensor_match_vendor_id(struct msm_sensor_ctrl_t *s_ctrl)
 		s_ctrl->sensordata->lens_id_info->data_type);
 		have_lensid = 1;
 	}
-	#endif
-	
+
 	sensor_i2c_client->cci_client->sid = temp_sid;
 	sensor_i2c_client->cci_client->cci_i2c_master = temp_master;
 	if (rc < 0) {
@@ -348,7 +340,6 @@ int msm_sensor_match_vendor_id(struct msm_sensor_ctrl_t *s_ctrl)
 				__func__, vcmid, s_ctrl->sensordata->vcm_id_info->vcm_id);
 			}
 		}
-	#ifdef CONFIG_VENOOM_MIUI_11_CAMERA_MODE
         if(have_lensid == 1)
 		{
 			if (s_ctrl->sensordata->lens_id_info->lens_id != lensid)
@@ -364,7 +355,6 @@ int msm_sensor_match_vendor_id(struct msm_sensor_ctrl_t *s_ctrl)
 				__func__, lensid, s_ctrl->sensordata->lens_id_info->lens_id);
 			}
 		}
-	#endif
 	}
 	pr_err("%s: read vendor id: 0x%x expected id 0x%x:\n",
 			__func__, vendorid, s_ctrl->sensordata->vendor_id_info->vendor_id);
