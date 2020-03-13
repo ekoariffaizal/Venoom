@@ -39,7 +39,6 @@ Module.symvers
 *.dwo
 *.su
 /out
-/drivers/media/platform/msm/camera_v2_new/
 
 #
 # Top-level generic files
