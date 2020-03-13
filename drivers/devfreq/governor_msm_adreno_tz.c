@@ -162,9 +162,7 @@ void compute_work_load(struct devfreq_dev_status *stats,
 	acc_total += stats->total_time;
 	acc_relative_busy += (stats->busy_time * stats->current_frequency) /
 				devfreq->profile->freq_table[0];
-	busy = (u64)stats->busy_time * stats->current_frequency;
-	do_div(busy, devfreq->profile->freq_table[0]);
-	acc_relative_busy += busy;
+
 	if (is_display_on()) {
 		if (acc_total)
 			adreno_load_perc = ((acc_relative_busy * 100) / acc_total);

@@ -22,6 +22,7 @@
 #include <linux/leds.h>
 #include <linux/qpnp/pwm.h>
 #include <linux/err.h>
+#include <linux/display_state.h>								
 #include <linux/string.h>
 
 #include "mdss_dsi.h"
@@ -67,6 +68,12 @@ extern bool synaptics_gesture_func_on;
 bool ESD_TE_status = false;
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
+bool display_on = true;
+
+bool is_display_on()
+{
+	return display_on;
+}
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	if (ctrl->pwm_pmi)
@@ -1111,6 +1118,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		pr_err("%s: Invalid input data\n", __func__);
 		return -EINVAL;
 	}
+display_on = true;				   
 
 	pinfo = &pdata->panel_info;
 	ctrl = container_of(pdata, struct mdss_dsi_ctrl_pdata,
@@ -1171,12 +1179,10 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	/* Ensure low persistence mode is set as before */
 	mdss_dsi_panel_apply_display_setting(pdata, pinfo->persist_mode);
 
-#ifdef CONFIG_FB_MSM_MDSS_LIVEDISPLAY
 
 	if (pdata->event_handler)
 		pdata->event_handler(pdata, MDSS_EVENT_UPDATE_LIVEDISPLAY,
-				(void *)(unsigned long) MODE_UPDATE_ALL);
-#endif	  
+				(void *)(unsigned long) MODE_UPDATE_ALL);  
 
 end:
 	pr_err("%s:-\n", __func__);
@@ -3298,9 +3304,7 @@ static int mdss_panel_parse_dt(struct device_node *np,
 		pinfo->esc_clk_rate_hz = MDSS_DSI_MAX_ESC_CLK_RATE_HZ;
 	pr_debug("%s: esc clk %d\n", __func__, pinfo->esc_clk_rate_hz);
 
-#ifdef CONFIG_FB_MSM_MDSS_LIVEDISPLAY
 	mdss_livedisplay_parse_dt(np, pinfo);
-#endif
 	return 0;
 
 error:

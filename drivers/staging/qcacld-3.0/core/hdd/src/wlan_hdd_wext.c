@@ -9703,7 +9703,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			break;
 		}
 
-		sme_get_config_param(mac_handle, sme_config);
+		sme_get_config_param(hal, sme_config);
 //		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
 //		    sme_config->csrConfig.channelBondingMode24GHz)
 			ch_bond24 = true;
