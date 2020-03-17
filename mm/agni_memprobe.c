@@ -57,18 +57,6 @@ bool agni_memprober(void) {
 	device_fourgb();
 	availmem_prober();
 
-	/* Decide voting */
-	if (!charging_detected()) {
-		if (mem_avail_perc < trigthreshold) /* low available ram when not charging */
-			vote = true;
-		else
-			vote = false; /* stop swapping when enough available ram */
-	} else {
-		if (batt_swap_push && (mem_avail_perc < trigthreshold)) /* Battery > 80 % and low available ram with charging ON  */
-			vote = true;
-		else
-			vote = false; /* Allow charging faster by keeping swapping off and thus less cpu usage */
-	}
 
 	if (adreno_load_perc > GPULOADTRIGGER) { /* High GPU usage - typically while gaming */
 		if (fourgb)
