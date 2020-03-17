@@ -10187,7 +10187,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		smeConfig->csrConfig.channelBondingMode5GHz = 0;
 	} else {
 		smeConfig->csrConfig.channelBondingMode24GHz =
-			eHT_CHANNEL_WIDTH_40MHZ;
+			pConfig->nChannelBondingMode24GHz;
 		smeConfig->csrConfig.channelBondingMode5GHz =
 			pConfig->nChannelBondingMode5GHz;
 	}

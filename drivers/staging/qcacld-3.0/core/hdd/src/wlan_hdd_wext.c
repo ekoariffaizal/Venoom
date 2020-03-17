@@ -6823,9 +6823,9 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 
 	old_phymode = sme_get_phy_mode(hal);
 
-//	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-//	    sme_get_cb_phy_state_from_cb_ini_value(phddctx->config->
-//						   nChannelBondingMode24GHz))
+	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
+	    sme_get_cb_phy_state_from_cb_ini_value(phddctx->config->
+						   nChannelBondingMode24GHz))
 		ch_bond24 = true;
 
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
@@ -7071,7 +7071,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 
 		phddctx->config->dot11Mode = hdd_dot11mode;
 		phddctx->config->nChannelBondingMode24GHz =
-			eHT_CHANNEL_WIDTH_40MHZ;
+			sme_config->csrConfig.channelBondingMode24GHz;
 		phddctx->config->nChannelBondingMode5GHz =
 			sme_config->csrConfig.channelBondingMode5GHz;
 		phddctx->config->vhtChannelWidth = vhtchanwidth;
@@ -9704,8 +9704,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		}
 
 		sme_get_config_param(hal, sme_config);
-//		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-//		    sme_config->csrConfig.channelBondingMode24GHz)
+		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
+		    sme_config->csrConfig.channelBondingMode24GHz)
 			ch_bond24 = true;
 
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
