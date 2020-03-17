@@ -30,7 +30,6 @@
 #include <linux/security.h>
 #include <linux/compat.h>
 #include <linux/ctype.h>
-#include <linux/adrenokgsl_state.h>
 
 #include "kgsl.h"
 #include "kgsl_debugfs.h"
@@ -78,13 +77,6 @@ struct kgsl_dma_buf_meta {
 	struct dma_buf *dmabuf;
 	struct sg_table *table;
 };
-
-bool adrenokgsl_on = false;
-
-bool is_adrenokgsl_on()
-{
-	return adrenokgsl_on;
-}
 
 static inline struct kgsl_pagetable *_get_memdesc_pagetable(
 		struct kgsl_pagetable *pt, struct kgsl_mem_entry *entry)
@@ -767,7 +759,6 @@ static int kgsl_suspend_device(struct kgsl_device *device, pm_message_t state)
 	if (status == 0)
 		device->ftbl->suspend_device(device, state);
 	mutex_unlock(&device->mutex);
-	adrenokgsl_on = false;
 
 	return status;
 }
@@ -797,7 +788,6 @@ static int kgsl_resume_device(struct kgsl_device *device)
 	}
 
 	mutex_unlock(&device->mutex);
-	adrenokgsl_on = true;
 	return 0;
 }
 
