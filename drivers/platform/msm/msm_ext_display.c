@@ -236,6 +236,7 @@ static int msm_ext_disp_process_display(struct msm_ext_disp *ext_disp,
 		pr_debug("not waiting for display\n");
 		goto end;
 	}
+
 	reinit_completion(&ext_disp->hpd_comp);
 	ret = wait_for_completion_timeout(&ext_disp->hpd_comp,
 			msecs_to_jiffies(5000));
@@ -270,6 +271,7 @@ static int msm_ext_disp_process_audio(struct msm_ext_disp *ext_disp,
 		pr_debug("not waiting for audio\n");
 		goto end;
 	}
+
 	reinit_completion(&ext_disp->hpd_comp);
 	ret = wait_for_completion_timeout(&ext_disp->hpd_comp,
 			msecs_to_jiffies(2000));
