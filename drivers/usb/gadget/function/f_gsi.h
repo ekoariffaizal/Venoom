@@ -32,7 +32,7 @@
 #define GSI_MBIM_CTRL_NAME "android_mbim"
 #define GSI_DPL_CTRL_NAME "dpl_ctrl"
 #define GSI_CTRL_NAME_LEN (sizeof(GSI_MBIM_CTRL_NAME)+2)
-#define GSI_MAX_CTRL_PKT_SIZE 4096
+#define GSI_MAX_CTRL_PKT_SIZE 8192
 #define GSI_CTRL_DTR (1 << 0)
 
 
@@ -414,7 +414,7 @@ static struct usb_ss_ep_comp_descriptor rmnet_gsi_ss_in_comp_desc = {
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	/* the following 2 values can be tweaked if necessary */
-	.bMaxBurst =		2,
+	.bMaxBurst =		6,
 	/* .bmAttributes =	0, */
 };
 
@@ -675,7 +675,7 @@ static struct usb_ss_ep_comp_descriptor rndis_gsi_ss_bulk_comp_desc = {
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	/* the following 2 values can be tweaked if necessary */
-	.bMaxBurst =		2,
+	.bMaxBurst =		6,
 	/* .bmAttributes =	0, */
 };
 
@@ -958,7 +958,7 @@ static struct usb_ss_ep_comp_descriptor mbim_gsi_ss_in_comp_desc = {
 	.bDescriptorType =      USB_DT_SS_ENDPOINT_COMP,
 
 	/* the following 2 values can be tweaked if necessary */
-	.bMaxBurst =         2,
+	.bMaxBurst =         6,
 	/* .bmAttributes =      0, */
 };
 
@@ -1256,7 +1256,7 @@ static struct usb_ss_ep_comp_descriptor ecm_gsi_ss_in_comp_desc = {
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
 	/* the following 2 values can be tweaked if necessary */
-	.bMaxBurst =         2,
+	.bMaxBurst =         6,
 	/* .bmAttributes =      0, */
 };
 

@@ -1357,7 +1357,7 @@ struct xhci_td {
 };
 
 /* xHCI command default timeout value */
-#define XHCI_CMD_DEFAULT_TIMEOUT	(5 * 100)
+#define XHCI_CMD_DEFAULT_TIMEOUT	(5 * HZ)
 
 /* command descriptor */
 struct xhci_cd {
@@ -1837,6 +1837,8 @@ int xhci_sec_event_ring_cleanup(struct usb_hcd *hcd, unsigned intr_num);
 /* xHCI host controller glue */
 typedef void (*xhci_get_quirks_t)(struct device *, struct xhci_hcd *);
 int xhci_handshake(void __iomem *ptr, u32 mask, u32 done, int usec);
+int xhci_handshake_check_state(struct xhci_hcd *xhci,
+		void __iomem *ptr, u32 mask, u32 done, int usec);
 void xhci_quiesce(struct xhci_hcd *xhci);
 int xhci_halt(struct xhci_hcd *xhci);
 int xhci_reset(struct xhci_hcd *xhci);

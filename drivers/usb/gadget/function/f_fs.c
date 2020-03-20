@@ -988,13 +988,14 @@ retry:
 			 * still busy.
 			 */
 			if (!(io_data->read && ep->is_busy)) {
-				ret = usb_ep_queue(ep->ep, req, GFP_ATOMIC);
 				ep->is_busy = true;
+				ret = usb_ep_queue(ep->ep, req, GFP_ATOMIC);
 			}
 
 			spin_unlock_irq(&epfile->ffs->eps_lock);
 
 			if (unlikely(ret < 0)) {
+				ep->is_busy = false;
 				ret = -EIO;
 			} else if (unlikely(
 				   wait_for_completion_interruptible(done))) {
@@ -1135,7 +1136,6 @@ static int ffs_aio_cancel(struct kiocb *kiocb)
 {
 	struct ffs_io_data *io_data = kiocb->private;
 	struct ffs_epfile *epfile = kiocb->ki_filp->private_data;
-	unsigned long flags;
 	int value;
 
 	ENTER();
@@ -1150,7 +1150,7 @@ static int ffs_aio_cancel(struct kiocb *kiocb)
 	else
 		value = -EINVAL;
 
-	spin_unlock_irqrestore(&epfile->ffs->eps_lock, flags);
+	spin_unlock_irq(&epfile->ffs->eps_lock);
 
 	ffs_log("exit: value %d", value);
 

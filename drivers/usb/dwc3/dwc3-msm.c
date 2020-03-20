@@ -3270,7 +3270,13 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-	of_platform_device_create(dwc3_node, NULL, &pdev->dev);
+	ret = of_platform_populate(node, NULL, NULL, &pdev->dev);
+	if (ret) {
+		dev_err(&pdev->dev,
+				"failed to add create dwc3 core\n");
+		of_node_put(dwc3_node);
+		goto err;
+	}
 
 	mdwc->dwc3 = of_find_device_by_node(dwc3_node);
 	of_node_put(dwc3_node);
@@ -3390,6 +3396,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 put_dwc3:
 	if (mdwc->bus_perf_client)
 		msm_bus_scale_unregister_client(mdwc->bus_perf_client);
+	of_platform_depopulate(&pdev->dev);
 err:
 	destroy_workqueue(mdwc->dwc3_wq);
 	return ret;
@@ -3986,6 +3993,21 @@ static void dwc3_otg_sm_work(struct work_struct *w)
 			pm_runtime_get_sync(mdwc->dev);
 			dbg_event(0xFF, "BIDLE gsync",
 				atomic_read(&mdwc->dev->power.usage_count));
+			if (mdwc->check_for_float) {
+				/*
+				 * If DP_DM are found to be floating, do not
+				 * start the peripheral mode.
+				 */
+				if (usb_phy_dpdm_with_idp_src(mdwc->hs_phy) ==
+							DP_DM_STATE_FLOAT) {
+					mdwc->float_detected = true;
+					dwc3_msm_gadget_vbus_draw(mdwc, 0);
+					pm_runtime_put_sync(mdwc->dev);
+					dbg_event(0xFF, "FLT sync", atomic_read(
+						&mdwc->dev->power.usage_count));
+					break;
+				}
+			}
 			dwc3_otg_start_peripheral(mdwc, 1);
 			mdwc->drd_state = DRD_STATE_PERIPHERAL;
 			work = 1;

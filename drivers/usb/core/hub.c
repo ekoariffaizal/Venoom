@@ -460,7 +460,7 @@ static void set_port_led(struct usb_hub *hub, int port1, int selector)
 		to_led_name(selector), status);
 }
 
-#define	LED_CYCLE_PERIOD	67
+#define	LED_CYCLE_PERIOD	((2*HZ)/3)
 
 static void led_work(struct work_struct *work)
 {
@@ -951,17 +951,13 @@ int usb_remove_device(struct usb_device *udev)
 {
 	struct usb_hub *hub;
 	struct usb_interface *intf;
-	int ret;
 
 	if (!udev->parent)	/* Can't remove a root hub */
 		return -EINVAL;
 	hub = usb_hub_to_struct_hub(udev->parent);
 	intf = to_usb_interface(hub->intfdev);
 
-	ret = usb_autopm_get_interface(intf);
-	if (ret < 0)
-		return ret;
-
+	usb_autopm_get_interface(intf);
 	set_bit(udev->portnum, hub->removed_bits);
 	hub_port_logical_disconnect(hub, udev->portnum);
 	usb_autopm_put_interface(intf);
@@ -1188,6 +1184,11 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 #ifdef CONFIG_PM
 			udev->reset_resume = 1;
 #endif
+			/* Don't set the change_bits when the device
+			 * was powered off.
+			 */
+			if (test_bit(port1, hub->power_bits))
+				set_bit(port1, hub->change_bits);
 
 		} else {
 			/* The power session is gone; tell hub_wq */
