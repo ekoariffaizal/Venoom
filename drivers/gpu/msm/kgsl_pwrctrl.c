@@ -328,30 +328,7 @@ static void kgsl_pwrctrl_set_thermal_cycle(struct kgsl_pwrctrl *pwr,
  * default value.  Do not change the bus if a constraint keeps the new
  * level at the current level.  Set the new GPU frequency.
  */
-void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
-				unsigned int new_level)
-{
-	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
-	struct kgsl_pwrlevel *pwrlevel;
-	unsigned int old_level = pwr->active_pwrlevel;
 
-	/* If a pwr constraint is expired, remove it */
-	if ((pwr->constraint.type != KGSL_CONSTRAINT_NONE) &&
-		(time_after(jiffies, pwr->constraint.expires))) {
-		/* Trace the constraint being un-set by the driver */
-//		trace_kgsl_constraint(device, pwr->constraint.type,
-//						old_level, 0);
-		/*Invalidate the constraint set */
-		pwr->constraint.expires = 0;
-		pwr->constraint.type = KGSL_CONSTRAINT_NONE;
-	}
-
-	/*
-	 * Adjust the power level if required by thermal, max/min,
-	 * constraints, etc
-	 */
-	return _adjust_pwrlevel(pwr, new_level, &pwr->constraint);
-}
 
 /**
  * kgsl_pwrctrl_pwrlevel_change() - Validate and change power levels
@@ -370,8 +347,6 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	struct kgsl_pwrlevel *pwrlevel;
 	unsigned int old_level = pwr->active_pwrlevel;
-
-	new_level = kgsl_pwrctrl_adjust_pwrlevel(device, new_level);
 
 	/*
 	 * If thermal cycling is required and the new level hits the
