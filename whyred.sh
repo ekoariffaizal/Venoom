@@ -1,7 +1,7 @@
 #!/bin/bash
 kernel_dir=$PWD
 export V="v1.5"
-export CONFIG_FILE="whyred_defconfig"
+export CONFIG_FILE="Ven_defconfig"
 export ARCH=arm64
 export SUBARCH=arm64
 export KBUILD_BUILD_USER=Exo
@@ -11,13 +11,13 @@ export CXX="ccache g++"
 export CCACHE="$(command -v ccache)"
 export CCACHE_DIR="~/.ccache"
 export "PATH=/usr/lib/ccache:$PATH"
-export CROSS_COMPILE_ARM32="/mnt/d/Project/compiler/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-"
+export CROSS_COMPILE_ARM32="/home/venoom/gcc/32/bin/arm-linux-androideabi-"
 export STRIP_KO="/mnt/d/Project/compiler/aarch64-linux-android/aarch64-unknown-linux-android/bin/strip"
 #export TOOL_CHAIN_PATH="/mnt/d/Project/compiler/aarch64-linux-android-4.9/bin/aarch64-linux-android-"
-export TOOL_CHAIN_PATH="/home/venoom/gcc/aarch64-linux-gnu/bin/aarch64-linux-gnu-"
+export TOOL_CHAIN_PATH="/home/venoom/gcc/64/bin/aarch64-linux-android-"
 #export CLANG_TCHAIN="/home/venoom/gcc/clang/bin/clang"
 export CLANG_TCHAIN="/home/venoom/gcc/clang/bin/clang"
-export CC="/home/venoom/gcc/clang/bin/clang"
+export CC="/home/venoom/gcc/bin/clang"
 export CLANG_VERSION="$(${CLANG_TCHAIN} --version | head -n 1 | cut -d'(' -f1,4)"
 #export LD_LIBRARY_PATH="${TOOL_CHAIN_PATH}/../lib"
 #export PATH=$PATH:${TOOL_CHAIN_PATH}
@@ -31,7 +31,7 @@ cd $kernel_dir
 
 
 make_a_fucking_defconfig() {
-	make O=out whyred_defconfig -j4
+	make O=out Ven_defconfig -j4
 }
 
 compile() {
