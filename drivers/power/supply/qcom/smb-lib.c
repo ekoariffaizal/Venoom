@@ -2777,9 +2777,9 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 #elif defined(CONFIG_KERNEL_CUSTOM_E7S)
 #define HVDCP_CURRENT_UA		2000000
 #elif defined(CONFIG_KERNEL_CUSTOM_E7T)
-#define HVDCP_CURRENT_UA		2200000
+#define HVDCP_CURRENT_UA		2000000
 #else
-#define HVDCP_CURRENT_UA		3100000
+#define HVDCP_CURRENT_UA		2900000
 #endif
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
