@@ -46,8 +46,7 @@ void device_fourgb(void) {
 bool agni_memprober(void) {
 	bool vote = false;
 
-	device_fourgb();
-	availmem_prober();
+	device_fourgb();	
 
 	/* Decide voting */
 	if (!charging_detected()) {
