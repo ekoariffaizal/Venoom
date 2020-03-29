@@ -61,13 +61,6 @@ bool agni_memprober(void) {
 			vote = false; /* Allow charging faster by keeping swapping off and thus less cpu usage */
 	}
 
-	if (adreno_load_perc > GPULOADTRIGGER) { /* High GPU usage - typically while gaming */
-		if (fourgb)
-			vote = true; /* big games need more ram so zram swapping is beneficial on 4gb devices */
-		else
-			vote = false;
-	}
-
 	if (low_batt_swap_stall) /* Battery below 25% */
 		vote = false;
 		
