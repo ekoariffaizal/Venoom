@@ -42,14 +42,6 @@ void device_fourgb(void) {
 	}
 }
 
-void availmem_prober(void) {
-	long availpages, availablememk;
-
-	/* Ram pages */
-	availpages = si_mem_available();
-	availablememk = availpages << (PAGE_SHIFT - 10);
-	mem_avail_perc = ((availablememk + zram_ram_usage) * 100) / totalmemk;
-}
 
 bool agni_memprober(void) {
 	bool vote = false;
