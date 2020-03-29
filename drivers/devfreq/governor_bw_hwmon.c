@@ -52,6 +52,7 @@ struct hwmon_node {
 	unsigned int low_power_io_percent;
 	unsigned int low_power_delay;
 	unsigned int mbps_zones[NUM_MBPS_ZONES];
+	unsigned int boost_percent;
 
 	unsigned long prev_ab;
 	unsigned long *dev_ab;
@@ -78,6 +79,7 @@ struct hwmon_node {
 	struct bw_hwmon *hw;
 	struct devfreq_governor *gov;
 	struct attribute_group *attr_grp;
+	struct mutex mon_lock;
 };
 
 #define UP_WAKE 1
@@ -365,6 +367,17 @@ static unsigned long get_bw_and_set_irq(struct hwmon_node *node,
 		io_percent = node->low_power_io_percent;
 
 	/*
+	 * Apply the boost percentage by reducing the io percentage.
+	 * Additionally, the new io percentage is verified to be a
+	 * positive integer. If it is not a positive integer, the new
+	 * io percentage will be set to 1 (the lower bound).
+	 */
+	if ((int) (io_percent - node->boost_percent) > 0)
+		io_percent -= node->boost_percent;
+	else
+		io_percent = 1;
+
+	/*
 	 * The AB value that corresponds to the lowest mbps zone greater than
 	 * or equal to the "frequency" the current measurement will pick.
 	 * This upper limit is useful for balancing out any prediction
@@ -526,8 +539,11 @@ int update_bw_hwmon(struct bw_hwmon *hwmon)
 	if (!node)
 		return -ENODEV;
 
-	if (!node->mon_started)
+	mutex_lock(&node->mon_lock);
+	if (!node->mon_started) {
+		mutex_unlock(&node->mon_lock);
 		return -EBUSY;
+	}
 
 	dev_dbg(df->dev.parent, "Got update request\n");
 	devfreq_monitor_stop(df);
@@ -541,6 +557,7 @@ int update_bw_hwmon(struct bw_hwmon *hwmon)
 
 	devfreq_monitor_start(df);
 
+	mutex_unlock(&node->mon_lock);
 	return 0;
 }
 
@@ -587,7 +604,9 @@ static void stop_monitor(struct devfreq *df, bool init)
 	struct hwmon_node *node = df->data;
 	struct bw_hwmon *hw = node->hw;
 
+	mutex_lock(&node->mon_lock);
 	node->mon_started = false;
+	mutex_unlock(&node->mon_lock);
 
 	if (init) {
 		devfreq_monitor_stop(df);
@@ -790,6 +809,7 @@ gov_attr(low_power_ceil_mbps, 0U, 2500U);
 gov_attr(low_power_io_percent, 1U, 100U);
 gov_attr(low_power_delay, 1U, 60U);
 gov_list_attr(mbps_zones, NUM_MBPS_ZONES, 0U, UINT_MAX);
+gov_attr(boost_percent, 0U, 99U);
 
 static struct attribute *dev_attr[] = {
 	&dev_attr_guard_band_mbps.attr,
@@ -810,6 +830,7 @@ static struct attribute *dev_attr[] = {
 	&dev_attr_low_power_delay.attr,
 	&dev_attr_mbps_zones.attr,
 	&dev_attr_throttle_adj.attr,
+	&dev_attr_boost_percent.attr,
 	NULL,
 };
 
@@ -955,7 +976,10 @@ int register_bw_hwmon(struct device *dev, struct bw_hwmon *hwmon)
 	node->hyst_length = 0;
 	node->idle_mbps = 400;
 	node->mbps_zones[0] = 0;
+	node->boost_percent = CONFIG_DEVFREQ_GOV_QCOM_BW_HWMON_BOOST_PERCENT;
 	node->hw = hwmon;
+
+	mutex_init(&node->mon_lock);
 
 	mutex_lock(&list_lock);
 	list_add_tail(&node->list, &hwmon_list);

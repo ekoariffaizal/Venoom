@@ -57,11 +57,11 @@ ifeq ($(CONFIG_COMPAT_VDSO), y)
   else ifeq ($(shell which $(CROSS_COMPILE_ARM32)$(cc-name) 2> /dev/null),)
     $(error $(CROSS_COMPILE_ARM32)$(cc-name) not found, check CROSS_COMPILE_ARM32)
   else
-    export CROSS_COMPILE_ARM32
-    export CONFIG_VDSO32 := y
-    vdso32 := -DCONFIG_VDSO32=1
-  endif
-endif
+  #  export CROSS_COMPILE_ARM32
+  #  export CONFIG_VDSO32 := y
+  #  vdso32 := -DCONFIG_VDSO32=1
+ # endif
+#endif
 
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS	+= $(call clang-ifversion, -ge, 0600, -mgeneral-regs-only, -mno-implicit-float)

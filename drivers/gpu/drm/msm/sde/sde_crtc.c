@@ -20,7 +20,6 @@
 #include <linux/sort.h>
 #include <linux/debugfs.h>
 #include <linux/ktime.h>
-#include <linux/cpu_input_boost.h>
 #include <uapi/drm/sde_drm.h>
 #include <drm/drm_mode.h>
 #include <drm/drm_crtc.h>
@@ -903,7 +902,6 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 		struct drm_crtc_state *state)
 {
 	struct sde_crtc *sde_crtc;
-
 	struct sde_crtc_state *cstate;
 
 	if (!crtc || !state) {
@@ -953,9 +951,8 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc)
 	if (unlikely(!sde_crtc->num_mixers))
 		return;
 
-	SDE_ATRACE_BEGIN("crtc_commit");
-	cpu_input_boost_kick();
 
+	SDE_ATRACE_BEGIN("crtc_commit");
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
 		if (encoder->crtc != crtc)
 			continue;

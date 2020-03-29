@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,11 +20,10 @@
 #include <linux/ftrace.h>
 #include <linux/mm.h>
 #include <linux/msm_adreno_devfreq.h>
+#include <linux/state_notifier.h>
 #include <asm/cacheflush.h>
 #include <soc/qcom/scm.h>
 #include "governor.h"
-#include <linux/display_state.h>
-#include <linux/agni_meminfo.h>
 
 static DEFINE_SPINLOCK(tz_lock);
 static DEFINE_SPINLOCK(sample_lock);
@@ -71,7 +70,6 @@ static void do_partner_suspend_event(struct work_struct *work);
 static void do_partner_resume_event(struct work_struct *work);
 
 static struct workqueue_struct *workqueue;
-unsigned long adreno_load_perc;
 
 /*
  * Returns GPU suspend time in millisecond.
@@ -153,6 +151,8 @@ void compute_work_load(struct devfreq_dev_status *stats,
 		struct devfreq_msm_adreno_tz_data *priv,
 		struct devfreq *devfreq)
 {
+	u64 busy;
+
 	spin_lock(&sample_lock);
 	/*
 	 * Keep collecting the stats till the client
@@ -160,17 +160,9 @@ void compute_work_load(struct devfreq_dev_status *stats,
 	 * is done when the entry is read
 	 */
 	acc_total += stats->total_time;
-	acc_relative_busy += (stats->busy_time * stats->current_frequency) /
-				devfreq->profile->freq_table[0];
-
-	if (is_display_on()) {
-		if (acc_total)
-			adreno_load_perc = ((acc_relative_busy * 100) / acc_total);
-	} else {
-		adreno_load_perc = 0;
-	}
-	if (adreno_load_perc > GPULOADTRIGGER) /* High GPU usage - typically while gaming */
-		agni_swappiness = 1;
+	busy = (u64)stats->busy_time * stats->current_frequency;
+	do_div(busy, devfreq->profile->freq_table[0]);
+	acc_relative_busy += busy;
 
 	spin_unlock(&sample_lock);
 }
@@ -351,6 +343,12 @@ static int tz_init(struct devfreq_msm_adreno_tz_data *priv,
 	return ret;
 }
 
+#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
+extern int simple_gpu_active;
+extern int simple_gpu_algorithm(int level, int *val,
+				struct devfreq_msm_adreno_tz_data *priv);
+#endif
+
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 								u32 *flag)
 {
@@ -369,6 +367,16 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 	}
 
 	*freq = stats.current_frequency;
+
+	/*
+	 * Force to use & record as min freq when system has
+	 * entered pm-suspend or screen-off state.
+	 */
+	if (state_suspended) {
+		*freq = devfreq->profile->freq_table[devfreq->profile->max_state - 1];
+		return 0;
+	}
+
 	priv->bin.total_time += stats.total_time;
 	priv->bin.busy_time += stats.busy_time;
 
@@ -403,13 +411,25 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 			priv->bin.busy_time > CEILING) {
 		val = -1 * level;
 	} else {
-
+#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
+		if (simple_gpu_active) {
+			simple_gpu_algorithm(level, &val, priv);
+		} else {
+			scm_data[0] = level;
+			scm_data[1] = priv->bin.total_time;
+			scm_data[2] = priv->bin.busy_time;
+			scm_data[3] = context_count;
+			__secure_tz_update_entry3(scm_data, sizeof(scm_data),
+						&val, sizeof(val), priv);
+		}
+#else
 		scm_data[0] = level;
 		scm_data[1] = priv->bin.total_time;
 		scm_data[2] = priv->bin.busy_time;
 		scm_data[3] = context_count;
 		__secure_tz_update_entry3(scm_data, sizeof(scm_data),
 					&val, sizeof(val), priv);
+#endif
 	}
 	priv->bin.total_time = 0;
 	priv->bin.busy_time = 0;
@@ -536,6 +556,7 @@ static int tz_suspend(struct devfreq *devfreq)
 
 	priv->bin.total_time = 0;
 	priv->bin.busy_time = 0;
+
 	return 0;
 }
 

@@ -80,6 +80,13 @@ config DEVFREQ_GOV_CPUFREQ
 	  CPU frequency to device frequency mapping table(s). This governor
 	  can be useful for controlling devices such as DDR, cache, CCI, etc.
 
+config SIMPLE_GPU_ALGORITHM
+	bool "Simple GPU algorithm"
+	depends on DEVFREQ_GOV_MSM_ADRENO_TZ
+	help
+    default y
+	  Simple user configurable GPU controlling algorithm
+
 config QCOM_BIMC_BWMON
 	tristate "QCOM BIMC Bandwidth monitor hardware"
 	depends on ARCH_QCOM
@@ -143,6 +150,22 @@ config DEVFREQ_GOV_QCOM_BW_HWMON
 	  the CPU's use of DDR. Since this uses target specific counters it
 	  can conflict with existing profiling tools.  This governor is unlikely
 	  to be useful for non-QCOM devices.
+
+if DEVFREQ_GOV_QCOM_BW_HWMON
+
+config DEVFREQ_GOV_QCOM_BW_HWMON_BOOST_PERCENT
+	int "Boost percentage to apply"
+	default 0
+	range 0 99
+	help
+	  This attribute is subtracted from the 'io_percent' variable during
+	  the frequency calculation algorithm for bw_hwmon. In doing so, the
+	  resulting frequency produced will be bumped.
+
+	  This value must fit the bounds of [0, 99], and it must be greater
+	  than the 'io_percent' attribute.
+
+endif
 
 config DEVFREQ_GOV_QCOM_CACHE_HWMON
 	tristate "HW monitor based governor for cache frequency"

@@ -813,15 +813,6 @@ static ssize_t governor_store(struct device *dev, struct device_attribute *attr,
 	if (ret != 1)
 		return -EINVAL;
 
-	/* Governor white list */
-	if (strncmp(str_governor, "cpufreq", DEVFREQ_NAME_LEN) &&
-		strncmp(str_governor, "msm-adreno-tz", DEVFREQ_NAME_LEN) &&
-		strncmp(str_governor, "performance", DEVFREQ_NAME_LEN) &&
-		strncmp(str_governor, "powersave", DEVFREQ_NAME_LEN) &&
-		strncmp(str_governor, "simple_ondemand", DEVFREQ_NAME_LEN) &&
-		strncmp(str_governor, "userspace", DEVFREQ_NAME_LEN))
-		return -EINVAL;
-
 	mutex_lock(&devfreq_list_lock);
 	governor = find_devfreq_governor(str_governor);
 	if (IS_ERR(governor)) {
@@ -945,7 +936,7 @@ static ssize_t min_freq_store(struct device *dev, struct device_attribute *attr,
 	int ret;
 	unsigned long max;
 	
-	/* Minfreq is managed by devfreq_boost */
+		/* Minfreq is managed by devfreq_boost */
 	if (df->is_boost_device)
 		return count;
 
